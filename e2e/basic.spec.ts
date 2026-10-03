@@ -72,30 +72,46 @@ test('29 × 35 cm, configuración inválida y preservación de imagen', async ({
   await expect(page.getByRole('button', { name: 'Crear PDF' })).toBeEnabled();
 });
 test('cancelar, conservar trabajo y volver a generar', async ({ page }) => {
-  // Keep the worker in preparation long enough to test cancellation, not a race
-  // against an already completed tiny fixture on fast browsers.
+  // Hold preparation in both execution paths. WebKit can use the HTML fallback;
+  // a fixed delay can expire while Playwright scrolls to the cancel button.
   await page.addInitScript(() => {
-    const nativeTimeout = window.setTimeout.bind(window);
-    window.setTimeout = ((callback: TimerHandler, delay?: number, ...args: unknown[]) =>
-      nativeTimeout(callback, delay === 0 ? 50 : delay, ...args)) as typeof window.setTimeout;
-    const NativeWorker = window.Worker;
-    window.Worker = class extends NativeWorker {
-      private timer?: number;
-      postMessage(message: unknown) {
-        this.timer = window.setTimeout(() => super.postMessage(message), 500);
+    let holdNextRead = false;
+    let releaseRead: (() => void) | undefined;
+    window.addEventListener('cosito:test:hold-pdf', () => {
+      holdNextRead = true;
+    });
+    window.addEventListener('cosito:test:release-pdf', () => releaseRead?.());
+    const nativeRead = Blob.prototype.arrayBuffer;
+    Blob.prototype.arrayBuffer = async function () {
+      if (holdNextRead) {
+        holdNextRead = false;
+        await new Promise<void>((resolve) => {
+          releaseRead = resolve;
+        });
       }
-      terminate() {
-        window.clearTimeout(this.timer);
-        super.terminate();
+      return nativeRead.call(this);
+    };
+    const NativeWorker = window.Worker;
+    let holdFirstRequest = true;
+    window.Worker = class extends NativeWorker {
+      postMessage(message: unknown) {
+        if (holdFirstRequest) {
+          holdFirstRequest = false;
+          return;
+        }
+        super.postMessage(message);
       }
     };
   });
   await page.goto('./');
   await page.getByLabel('Seleccionar archivo de imagen').setInputFiles(fixture);
+  await expect(page.locator('.image-info img')).toBeVisible();
   await page.getByLabel('Ancho', { exact: true }).fill('50');
   await page.getByLabel('Alto', { exact: true }).fill('98');
+  await page.evaluate(() => window.dispatchEvent(new Event('cosito:test:hold-pdf')));
   await page.getByRole('button', { name: 'Crear PDF' }).click();
   await page.getByRole('button', { name: 'Cancelar', exact: true }).click();
+  await page.evaluate(() => window.dispatchEvent(new Event('cosito:test:release-pdf')));
   await expect(page.getByRole('button', { name: 'Crear PDF' })).toBeEnabled();
   await expect(page.getByText('Generación cancelada.', { exact: false })).toBeVisible();
   await page.getByRole('button', { name: 'Crear PDF' }).click();

@@ -4,6 +4,8 @@
 
 Cosito convierte una imagen en un mosaico de hojas listo para imprimir y montar.
 
+**[Usar el cosito](https://xdcl.github.io/Cosito/)**
+
 🔒 Todo el procesamiento ocurre localmente en tu navegador.
 
 Desarrollado por **xdCL**. Versión **0.1.0**, licencia MIT.
@@ -67,9 +69,11 @@ npm run format:check
 
 ## GitHub Pages
 
-Destino configurado: `https://xdcl.github.io/Cosito/`. El repositorio de destino es `https://github.com/xdCL/Cosito`; cambia `src/config/app.ts` si usas otra cuenta. Esta configuración no crea ni publica un repositorio automáticamente.
+Sitio publicado: **[Usar el cosito](https://xdcl.github.io/Cosito/)**. Código fuente: [xdCL/Cosito](https://github.com/xdCL/Cosito). GitHub Pages está activado con GitHub Actions y HTTPS; cada push a **main** valida y despliega la versión nueva.
 
-1. Crea un repositorio público **Cosito**, agrega estos archivos y el lockfile a la rama **main**.
+Para publicar una copia en otra cuenta:
+
+1. Crea un repositorio público **Cosito**, agrega estos archivos y el lockfile a la rama **main**, y adapta `src/config/app.ts` a tu repositorio.
 2. En **Settings → Pages → Build and deployment → Source**, selecciona **GitHub Actions**.
 3. Haz push a **main**, o ejecuta manualmente **Deploy GitHub Pages** en Actions.
 4. Espera que terminen validaciones y despliegue. El entorno `github-pages` mostrará la URL.

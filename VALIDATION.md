@@ -4,14 +4,14 @@ Fecha de entrega: **3 de octubre de 2026**, America/Santiago. Entorno: Windows, 
 
 ## Resultados ejecutados
 
-| Comando                                                   | Resultado real                                                                                                                               |
-| --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `npm ci`                                                  | Instalación reproducible del lockfile completada; 490 paquetes auditados, 0 vulnerabilidades reportadas por npm.                             |
-| `npm run check`                                           | Lint, protección de privacidad, typecheck, 25 tests Vitest y build: correctos.                                                               |
-| `npm test`                                                | 25 tests en 5 archivos: correctos.                                                                                                           |
-| `npm run format:check`                                    | Todos los archivos comprobados cumplen Prettier.                                                                                             |
-| `npm run test:e2e -- --project=chromium --project=webkit` | 37 correctos; 1 omitido de manera explícita (recarga offline en WebKit).                                                                     |
-| `npm run test:e2e`                                        | Se intentó la matriz completa. Firefox no inicia en este host; los intentos fallan antes de ejecutar Cosito. No se declara Firefox validado. |
+| Comando                                                   | Resultado real                                                                                                        |
+| --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `npm ci`                                                  | Instalación reproducible del lockfile completada; 490 paquetes auditados, 0 vulnerabilidades reportadas por npm.      |
+| `npm run check`                                           | Lint, protección de privacidad, typecheck, 25 tests Vitest y build: correctos.                                        |
+| `npm test`                                                | 25 tests en 5 archivos: correctos.                                                                                    |
+| `npm run format:check`                                    | Todos los archivos comprobados cumplen Prettier.                                                                      |
+| `npm run test:e2e -- --project=chromium --project=webkit` | 37 correctos; 1 omitido de manera explícita (recarga offline en WebKit).                                              |
+| `npm run test:e2e`                                        | Firefox no inicia en Windows. En GitHub Actions/Linux se ejecutaron sus 19 pruebas correctamente, incluyendo offline. |
 
 El build genera `/Cosito/`, manifest con scope/start_url correctos, service worker y precache de fuentes, iconos, documentos, chunks diferidos y worker PDF. JS inicial: aproximadamente **18,6 KiB gzip**, más CSS de unos 5,0 KB gzip y fuentes locales de 84,9 KB. pdf-lib se carga al generar; PWA precachea su código para permitir uso offline. No se descargan imágenes del usuario.
 
@@ -55,7 +55,7 @@ Chromium: con app y assets cacheados, se activa offline, se **recarga**, se sele
 
 WebKit: la misma prueba se intentó con `setOffline` y bloqueo HTTP. La automatización falla al navegar, con `WebKit encountered an internal error` o `Blocked by Web Inspector`. Se omite explícitamente ese test; no se reporta éxito offline en WebKit. Regresión documentada en [microsoft/playwright#42775](https://github.com/microsoft/playwright/issues/42775). Safari instalado/iOS requieren verificación manual.
 
-Firefox: Windows informa error de configuración en paralelo, ensamblado `mozglue` no encontrado. Se reinstaló Firefox con `npx playwright install --force firefox`, pero el error persiste. Se conservaron sus pruebas y proyecto Playwright; CI utiliza Linux. No se ejecutó GitHub Actions en un repositorio remoto durante esta entrega.
+Firefox: Windows informa error de configuración en paralelo, ensamblado `mozglue` no encontrado. Se reinstaló Firefox con `npx playwright install --force firefox`, pero el error persiste. GitHub Actions utiliza Linux: la primera ejecución remota completó sus **19 pruebas**, incluyendo generación, descarga, navegación, accesibilidad, skins y recarga offline. Esa ejecución completa tuvo un fallo en la prueba de cancelación de WebKit: el retraso artificial de 500 ms podía expirar antes del clic. La prueba ahora retiene la preparación tanto en el worker como en la alternativa HTML hasta el clic de cancelación y permite generar normalmente en el segundo intento. Se repitió cinco veces por navegador: **10 ejecuciones correctas** en Chromium/WebKit. [Resultados de CI](https://github.com/xdCL/Cosito/actions/workflows/ci.yml).
 
 ## Recursos y memoria
 
@@ -69,4 +69,4 @@ Los tests de raster plan prueban los topes de 4096 px/12 MP sin ampliar la fuent
 
 Imprimir Carta, A4 y Oficio a Tamaño real / 100 %, medir calibración de 100 mm y cuadrado 50 × 50 mm con regla. Montar 29 × 35 y 50 × 98 cm y medir ancho/alto final, cortes, solapes y alineación. Comprobar márgenes seguros del equipo y legibilidad de referencias. Revisar ChromeOS modesto, teléfono real, Safari/iOS y lectores PDF habituales. La aplicación no controla el escalado del driver.
 
-El sitio **está preparado para despliegue**, pero no se publicó ni se creó un repositorio remoto. Sigue los pasos de GitHub Pages del README. Mantener versión 0.1.0 hasta obtener evidencia física suficiente para v1.0.0.
+El código está publicado en [xdCL/Cosito](https://github.com/xdCL/Cosito) y el sitio funciona en [GitHub Pages](https://xdcl.github.io/Cosito/), con HTTPS y despliegue automático desde **main**. Se verificaron el despliegue exitoso, la respuesta HTTP 200 y la carga de la interfaz pública. Mantener versión 0.1.0 hasta obtener evidencia física suficiente para v1.0.0.
