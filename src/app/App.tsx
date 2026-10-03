@@ -15,6 +15,7 @@ import type { PdfOptions, Progress } from '../pdf/types';
 import { pdfFilename } from '../utils/filename';
 import { Header } from '../components/Header';
 import { SectionNavigation } from '../components/SectionNavigation';
+import { TypewriterWord } from '../components/TypewriterWord';
 import { PosterPreview } from '../components/PosterPreview';
 import { PresetDialog } from '../components/PresetDialog';
 import { loadSkin, saveSkin, SKINS, type Skin } from '../theme/skin';
@@ -29,6 +30,7 @@ type InstallEvent = Event & {
 };
 export function App() {
   const [skin, setSkin] = useState(loadSkin);
+  const [titlesAnimated, setTitlesAnimated] = useState(true);
   const brand = SKINS[skin];
   useEffect(() => {
     document.documentElement.dataset.skin = skin;
@@ -218,11 +220,22 @@ export function App() {
       <main id="main">
         <section class="intro">
           <p class="eyebrow">{brand.eyebrow}</p>
-          <h1>{APP_CONFIG.tagline}</h1>
-          <p>
+          <h1>
+            {APP_CONFIG.tagline.split('grandes')[0]}
+            <TypewriterWord text="grandes" enabled={titlesAnimated} />
+            {APP_CONFIG.tagline.split('grandes')[1]}
+          </h1>
+          <p class="intro-description">
             Usar el cosito es simple: agrega tu imagen y elige el tamaño.
             <br class="desktop-break" /> De tu pantalla a tu sala, pared o próximo proyecto.
           </p>
+          <button
+            class="text-button title-motion-control"
+            type="button"
+            onClick={() => setTitlesAnimated((value) => !value)}
+          >
+            {titlesAnimated ? 'Pausar animación de titulares' : 'Reanudar animación de titulares'}
+          </button>
         </section>
         <div class="workspace">
           <div class="configuration">
@@ -457,7 +470,9 @@ export function App() {
           />
         </div>
         <aside class="assembly-help" id="montaje" tabIndex={-1} aria-labelledby="assembly-title">
-          <h2 id="assembly-title">Del cosito a algo grande.</h2>
+          <h2 id="assembly-title" aria-label="Del cosito a algo grande.">
+            Del cosito a algo <TypewriterWord text="grande" enabled={titlesAnimated} />.
+          </h2>
           <ol>
             <li>
               <strong>Imprime al 100 %.</strong> Elige Tamaño real y desactiva Ajustar a página.

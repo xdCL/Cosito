@@ -31,6 +31,7 @@ Cada proyecto empieza con ancho y alto vacíos. No hay una medida de póster fij
 - Paleta coral, amarillo, turquesa y lila sobre crema; [colores y voz](PALETTE.md).
 - Skin Escuela Los Leones desde **Estilo**, independiente de Tema: azul `#0066CC`, amarillo `#FFCC00` y blanco. Se recuerda en este navegador.
 - Animaciones breves de 120–220 ms en controles, entradas y diálogos; se desactivan con la preferencia de movimiento reducido del sistema.
+- Gradientes suaves como manchas de acuarela en ambas skins y subrayados irregulares. Los titulares escriben y borran una palabra lentamente, sin mover el contenido; pueden pausarse y respetan movimiento reducido.
 - Fraunces e Inter variables WOFF2 empaquetadas, sin CDN ni Google Fonts.
 - Tamaños oficiales A3–A0 y presets personales con creación, renombrado y eliminación local.
 - PDF físico en milímetros, progreso, cancelación y descarga local.

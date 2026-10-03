@@ -1,5 +1,60 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+import { APP_CONFIG } from '../src/config/app';
+
+test('titulares: escribir y borrar sin mover el layout, pausa y movimiento reducido', async ({
+  page,
+}) => {
+  await page.clock.install();
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.goto('./');
+  await page.evaluate(() => document.fonts.ready);
+  const heading = page.locator('.intro h1');
+  const word = heading.locator('.typewriter');
+  const ink = word.locator('.typewriter-ink');
+  await expect(word).toHaveAttribute('data-running', 'true');
+  await expect(heading).toHaveAccessibleName(APP_CONFIG.tagline);
+  const before = await heading.boundingBox();
+  await page.clock.runFor(4600);
+  expect((await ink.textContent())!.length).toBeLessThan('grandes'.length);
+  await expect(heading).toHaveAccessibleName(APP_CONFIG.tagline);
+  const during = await heading.boundingBox();
+  expect(during!.height).toBeCloseTo(before!.height, 2);
+  expect(during!.width).toBeCloseTo(before!.width, 2);
+  await page.clock.runFor(3600);
+  await expect(ink).toHaveText('grandes');
+  await page.getByRole('button', { name: 'Pausar animación de titulares' }).click();
+  await expect(word).toHaveAttribute('data-running', 'false');
+  await page.clock.runFor(10000);
+  await expect(ink).toHaveText('grandes');
+  await page.getByRole('button', { name: 'Reanudar animación de titulares' }).click();
+  await expect(word).toHaveAttribute('data-running', 'true');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await expect(word).toHaveAttribute('data-running', 'false');
+  await page.clock.runFor(10000);
+  await expect(ink).toHaveText('grandes');
+  await expect(
+    page.getByRole('button', { name: 'Pausar animación de titulares' }),
+  ).not.toBeVisible();
+});
+
+test('gradientes en ambas skins: contraste y lectura con titulares animados', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference', colorScheme: 'dark' });
+  await page.goto('./');
+  for (const skin of ['cosito', 'los-leones']) {
+    await page.getByLabel('Estilo', { exact: true }).selectOption(skin);
+    for (const theme of ['light', 'dark', 'system']) {
+      await page.getByLabel('Tema', { exact: true }).selectOption(theme);
+      expect(
+        await page.locator('body').evaluate((element) => getComputedStyle(element).backgroundImage),
+      ).toContain('radial-gradient');
+      expect(
+        (await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze())
+          .violations,
+      ).toEqual([]);
+    }
+  }
+});
 
 test('skin Los Leones: identidad, persistencia y cambio sin perder el PDF', async ({ page }) => {
   await page.goto('./');

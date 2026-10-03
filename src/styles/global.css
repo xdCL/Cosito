@@ -231,7 +231,7 @@ footer {
   margin-bottom: 16px;
   color: var(--color-text-muted);
 }
-.intro > p:last-child {
+.intro-description {
   color: var(--color-text-muted);
   font-size: 1rem;
   max-width: 620px;
@@ -766,7 +766,7 @@ dialog .button-row {
   .intro h1 {
     max-width: 850px;
   }
-  .intro > p:last-child {
+  .intro-description {
     font-size: 1.1rem;
   }
   .drop-zone {

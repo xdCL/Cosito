@@ -13,7 +13,7 @@ Fecha de entrega: **3 de octubre de 2026**, America/Santiago. Entorno: Windows, 
 | `npm run test:e2e -- --project=chromium --project=webkit` | 37 correctos; 1 omitido de manera explícita (recarga offline en WebKit).                                              |
 | `npm run test:e2e`                                        | Firefox no inicia en Windows. En GitHub Actions/Linux se ejecutaron sus 19 pruebas correctamente, incluyendo offline. |
 
-El build genera `/Cosito/`, manifest con scope/start_url correctos, service worker y precache de fuentes, iconos, documentos, chunks diferidos y worker PDF. JS inicial: aproximadamente **18,6 KiB gzip**, más CSS de unos 5,0 KB gzip y fuentes locales de 84,9 KB. pdf-lib se carga al generar; PWA precachea su código para permitir uso offline. No se descargan imágenes del usuario.
+El build genera `/Cosito/`, manifest con scope/start_url correctos, service worker y precache de fuentes, iconos, documentos, chunks diferidos y worker PDF. JS inicial: aproximadamente **19,1 KiB gzip**, más CSS de unos 5,5 KB gzip y fuentes locales de 84,9 KB. pdf-lib se carga al generar; PWA precachea su código para permitir uso offline. No se descargan imágenes del usuario.
 
 Vite avisa que `theme-init.js` es un script clásico sin `type="module"`. Es intencional: se sirve como asset público y se ejecuta antes del primer pintado para aplicar el tema, sin esperar el módulo de la aplicación. El build comprueba que ese asset esté precacheado. npm advierte sobre `glob` transitivo; la auditoría de esta instalación reportó 0 vulnerabilidades.
 
@@ -32,6 +32,8 @@ Después del último ajuste visual (dimensiones del papel visibles también fuer
 - Guía y calibración opcionales mantienen papel; los vectores de 100 mm y 50 mm se comprueban en los streams PDF. El test no sustituye la medición impresa.
 
 ## Navegadores, interacción y accesibilidad
+
+Los gradientes tipo acuarela y los titulares con escritura suave pasan **41 E2E Chromium/WebKit**, con la misma omisión offline de WebKit. Se verifica el ciclo de borrado/escritura, nombre accesible constante, tamaño del titular sin cambios, pausa y movimiento reducido. axe-core no encuentra violaciones en ambas skins y los tres temas. Lint, tipos, 25 unitarios y build pasan. El JS inicial ocupa **19,1 KiB gzip** y CSS aproximadamente **5,5 KB gzip**.
 
 La distribución final en una columna pasa **37 E2E Chromium/WebKit**, con la misma omisión offline de WebKit. Los tests recorren las seis secciones en ambas skins a 320, 1366 y 1920 px; comprueban centrado, resultado debajo del papel, foco del destino, URL de sección, botón flotante visible y apertura automática de opciones avanzadas. Se verifican Tab, Escape con retorno de foco, cierre externo y cero violaciones axe-core con menú abierto en ambos estilos y temas. Se inspeccionaron capturas en `artifacts/cosito-columna*.png` y `artifacts/cosito-navegacion*.png`. Lint, tipos, 25 unitarios y build pasan; formato verificado después de actualizar documentos.
 
