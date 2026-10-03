@@ -1,0 +1,69 @@
+:root {
+  --motion-fast: 120ms;
+  --motion-normal: 180ms;
+  --motion-enter: 220ms;
+  --motion-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+/* Small transforms preserve text contrast and avoid animating layout. */
+@keyframes cosito-enter {
+  from {
+    transform: translateY(6px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+  .hamburger i {
+    transition: transform var(--motion-fast) var(--motion-ease);
+  }
+  button,
+  .primary {
+    transition:
+      transform var(--motion-fast) var(--motion-ease),
+      border-color var(--motion-fast) ease;
+  }
+  @media (hover: hover) {
+    button:not(:disabled):not(.text-button):hover,
+    a.primary:hover {
+      transform: translateY(-1px);
+    }
+  }
+  button:not(:disabled):not(.text-button):active,
+  a.primary:active {
+    transform: scale(0.98);
+  }
+  input,
+  select,
+  .unit-input,
+  .drop-zone {
+    transition: border-color var(--motion-fast) ease;
+  }
+  .intro,
+  .step,
+  .result {
+    animation: cosito-enter var(--motion-enter) var(--motion-ease) backwards;
+  }
+  .step:nth-child(2) {
+    animation-delay: 25ms;
+  }
+  .step:nth-child(3) {
+    animation-delay: 50ms;
+  }
+  .image-info,
+  .preview-figure,
+  .completion,
+  .progress,
+  .error,
+  .offline-note,
+  .section-links:not([hidden]),
+  dialog[open],
+  .privacy[open] > p,
+  .advanced[open] > fieldset,
+  .assembly-list[open] > ol {
+    animation: cosito-enter var(--motion-normal) var(--motion-ease);
+  }
+}

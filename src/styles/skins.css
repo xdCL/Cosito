@@ -1,0 +1,107 @@
+/* Los Leones: blue leads, yellow guides, white keeps inputs and paper clear. */
+:root[data-skin='los-leones'] {
+  --color-bg: #0066cc;
+  --color-surface: #0052a3;
+  --color-surface-raised: #00478f;
+  --color-text: #ffffff;
+  --color-text-muted: #e3efff;
+  --color-border: #b3d5ff;
+  --color-accent: #ffffff;
+  --color-accent-text: #00478f;
+  --color-focus: #ffffff;
+  --color-success: #ffffff;
+  --color-warning: #ffffff;
+  --color-danger: #ffffff;
+  --color-accent-soft: #0052a3;
+  --color-disabled: #d4e6ff;
+  --color-overlay: #001c38cc;
+  --color-coral: #ffcc00;
+  --color-sun: #ffcc00;
+  --color-turquoise: #ffcc00;
+  --color-lilac: #ffcc00;
+  --color-badge-ink: #00366c;
+  --color-action: #ffcc00;
+  --color-action-hover: #ffda47;
+  --color-action-text: #00366c;
+  --color-result: #0052a3;
+  --color-result-border: #b3d5ff;
+  --color-field: #ffffff;
+  --color-field-text: #00478f;
+  --color-field-muted: #00478f;
+  --color-paper-ink: #00366c;
+  --color-paper-line: #0066cc99;
+  --color-paper-band: #0066cc29;
+}
+:root[data-skin='los-leones'][data-theme='dark'] {
+  --color-bg: #002b57;
+  --color-surface: #003a75;
+  --color-surface-raised: #003366;
+  --color-accent-soft: #003a75;
+  --color-result: #003a75;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-skin='los-leones'][data-theme='system'] {
+    --color-bg: #002b57;
+    --color-surface: #003a75;
+    --color-surface-raised: #003366;
+    --color-accent-soft: #003a75;
+    --color-result: #003a75;
+  }
+}
+:root[data-skin='los-leones'] .wordmark,
+:root[data-skin='los-leones'] .intro > .eyebrow {
+  color: #ffcc00;
+}
+/* Small text needs the deeper blue behind yellow to retain contrast. */
+:root[data-skin='los-leones'] .intro > .eyebrow {
+  display: inline-block;
+  background: #00478f;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+}
+:root[data-skin='los-leones'] .school-caption {
+  color: #ffffff;
+}
+:root[data-skin='los-leones'] .logo-dot {
+  width: 9px;
+  height: 9px;
+  box-shadow: none;
+  margin-right: 0;
+}
+:root[data-skin='los-leones'] .assembly-help {
+  background: #ffcc00;
+  color: #00366c;
+  border-color: #ffcc00;
+}
+:root[data-skin='los-leones'] .assembly-help li::marker {
+  color: #00366c;
+}
+:root[data-skin='los-leones'] .result {
+  --color-result: #ffcc00;
+  --color-result-border: #ffcc00;
+  --color-text: #00366c;
+  --color-text-muted: #00478f;
+  --color-accent: #00478f;
+  --color-success: #00478f;
+  --color-danger: #00366c;
+  --color-disabled: #31587f;
+  --color-surface: #ffffff;
+  --color-surface-raised: #f5df76;
+  --color-border: #00478f;
+  --color-action: #0066cc;
+  --color-action-hover: #0052a3;
+  --color-action-text: #ffffff;
+  --color-focus: #00366c;
+  color: var(--color-text);
+}
+:root[data-skin='los-leones'] .error {
+  border-left: 3px solid #ffcc00;
+  padding-left: 10px;
+}
+:root[data-skin='los-leones'] .result .error {
+  border-color: currentColor;
+}
+:root[data-skin='los-leones'] .check-label input,
+:root[data-skin='los-leones'] progress {
+  accent-color: #ffcc00;
+}

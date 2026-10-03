@@ -1,0 +1,107 @@
+@font-face {
+  font-family: Fraunces;
+  src: url('@fontsource-variable/fraunces/files/fraunces-latin-wght-normal.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: Inter;
+  src: url('@fontsource-variable/inter/files/inter-latin-wght-normal.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+:root {
+  --color-bg: #fff9f0;
+  --color-surface: #ffffff;
+  --color-surface-raised: #f2ece3;
+  --color-field: var(--color-surface);
+  --color-field-text: var(--color-text);
+  --color-field-muted: var(--color-text-muted);
+  --color-text: #2e2842;
+  --color-text-muted: #655c73;
+  --color-border: #8c7a97;
+  --color-accent: #006b62;
+  --color-accent-text: #ffffff;
+  --color-focus: #7150ac;
+  --color-success: #006b62;
+  --color-warning: #855000;
+  --color-danger: #b33042;
+  --color-accent-soft: #ddf7f1;
+  --color-disabled: #655c73;
+  --color-overlay: #2e2842aa;
+  --color-coral: #ff7c66;
+  --color-sun: #ffd166;
+  --color-turquoise: #42c7b6;
+  --color-lilac: #b9a2ee;
+  --color-badge-ink: #2e2842;
+  --color-action: #ff7c66;
+  --color-action-hover: #ff927f;
+  --color-action-text: #2e2842;
+  --color-result: #f0e9ff;
+  --color-result-border: #b9a2ee;
+  --color-paper: #ffffff;
+  --color-paper-ink: #2e2842;
+  --color-paper-line: #7150ac99;
+  --color-paper-band: #7150ac29;
+  --color-paper-label: #ffffffed;
+  --font-heading: Fraunces, Georgia, serif;
+  --font-body: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  color-scheme: light;
+}
+:root[data-theme='dark'] {
+  --color-bg: #221f30;
+  --color-surface: #2c283d;
+  --color-surface-raised: #383247;
+  --color-text: #fff8f0;
+  --color-text-muted: #c5bdd4;
+  --color-border: #8c7e9e;
+  --color-accent: #79dfcc;
+  --color-accent-text: #221f30;
+  --color-focus: #c9afff;
+  --color-success: #79dfcc;
+  --color-warning: #ffd166;
+  --color-danger: #ffacb0;
+  --color-accent-soft: #243e3c;
+  --color-disabled: #c5bdd4;
+  --color-action: #ff9b86;
+  --color-action-hover: #ffb19f;
+  --color-result: #383045;
+  --color-result-border: #8872aa;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-theme='system'] {
+    --color-bg: #221f30;
+    --color-surface: #2c283d;
+    --color-surface-raised: #383247;
+    --color-text: #fff8f0;
+    --color-text-muted: #c5bdd4;
+    --color-border: #8c7e9e;
+    --color-accent: #79dfcc;
+    --color-accent-text: #221f30;
+    --color-focus: #c9afff;
+    --color-success: #79dfcc;
+    --color-warning: #ffd166;
+    --color-danger: #ffacb0;
+    --color-accent-soft: #243e3c;
+    --color-disabled: #c5bdd4;
+    --color-action: #ff9b86;
+    --color-action-hover: #ffb19f;
+    --color-result: #383045;
+    --color-result-border: #8872aa;
+    color-scheme: dark;
+  }
+}

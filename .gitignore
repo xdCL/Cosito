@@ -1,0 +1,9 @@
+node_modules/
+dist/
+test-results/
+playwright-report/
+artifacts/
+*.local
+public/PRIVACY.md
+public/LICENSE
+public/FONT-LICENSES.md
