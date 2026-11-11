@@ -53,6 +53,9 @@ test('libera URLs y workers al reemplazar imágenes y PDFs', async ({ page }) =>
   }
 });
 test('papel personalizado, ajustes y recuperación de error PDF', async ({ page }) => {
+  // This test checks validation/recovery; motion has its own dedicated coverage.
+  // Disable smooth scrolling so WebKit's checkbox hit test stays on the control.
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('./');
   await page.getByLabel('Seleccionar archivo de imagen').setInputFiles('e2e/fixtures/grid.png');
   await page.getByLabel('Ancho', { exact: true }).fill('10');
