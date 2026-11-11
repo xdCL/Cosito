@@ -7,6 +7,9 @@ export function Header({ skin, changeSkin }: { skin: Skin; changeSkin: (skin: Sk
   const [warning, setWarning] = useState('');
   return (
     <header class="site-header">
+      <a class="home-link" href={APP_CONFIG.homeUrl} title="Inicio de xdCL">
+        <span aria-hidden="true">←</span> Volver al inicio
+      </a>
       <a
         class={`wordmark ${skin === 'los-leones' ? 'wordmark-school' : ''}`}
         href={import.meta.env.BASE_URL}

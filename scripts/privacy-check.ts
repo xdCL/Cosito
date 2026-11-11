@@ -6,7 +6,7 @@ export function productionFiles(root: string): string[] {
   );
 }
 const forbidden =
-  /\b(fetch|XMLHttpRequest|WebSocket|EventSource|sendBeacon)\b|https?:\/\/(?!github\.com\/xdCL\/Cosito)/;
+  /\b(fetch|XMLHttpRequest|WebSocket|EventSource|sendBeacon)\b|https?:\/\/(?!github\.com\/xdCL\/Cosito\b|xdcl\.github\.io\/['"])/;
 for (const file of productionFiles('src')) {
   if (/\.(ts|tsx|js)$/.test(file) && forbidden.test(readFileSync(file, 'utf8')))
     throw new Error(`Uso de red no autorizado: ${file}`);

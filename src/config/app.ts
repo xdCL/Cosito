@@ -8,4 +8,5 @@ export const APP_CONFIG = {
   title: 'Cosito — Impresión en mosaico',
   // Destination configured for publication; change if using another account.
   repositoryUrl: 'https://github.com/xdCL/Cosito',
+  homeUrl: 'https://xdcl.github.io/',
 } as const;

@@ -1,5 +1,7 @@
 # Cosito
 
+**[← Volver al inicio · xdCL](https://xdcl.github.io/)**
+
 **Imprime imágenes grandes usando las hojas que ya tienes.**
 
 Cosito convierte una imagen en un mosaico de hojas listo para imprimir y montar.
