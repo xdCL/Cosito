@@ -430,6 +430,50 @@ footer {
 .savings {
   color: var(--color-success);
 }
+.image-adjustment {
+  display: grid;
+  gap: 12px;
+  max-width: 480px;
+  margin: 18px auto 0;
+  padding: 12px 16px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+.image-adjustment legend {
+  margin: 0;
+  padding-inline: 6px;
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+.image-adjustment p {
+  margin: 0;
+}
+.image-adjustment-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.image-adjustment-actions button {
+  padding-inline: 10px;
+  font-size: 0.8rem;
+}
+.image-rotation {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.image-alignment {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.image-adjustment select {
+  margin-top: 4px;
+  font-size: 0.875rem;
+}
 .preview-figure {
   margin: 22px 0 18px;
 }

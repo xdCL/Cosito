@@ -1,7 +1,7 @@
 import type { Layout } from '../core/tiling';
-import type { ImageFit } from '../core/image-fit';
+import type { ImageAdjustment } from '../core/image-fit';
 export type PdfOptions = {
-  fit: ImageFit;
+  imageAdjustment: ImageAdjustment;
   dpi: 150 | 200 | 300;
   cropMarks: boolean;
   alignmentMarks: boolean;

@@ -1,5 +1,5 @@
 import type { Orientation } from '../core/tiling';
-import type { ImageFit } from '../core/image-fit';
+import { DEFAULT_IMAGE_ADJUSTMENT, type ImageAdjustment } from '../core/image-fit';
 export type Config = {
   width: string;
   height: string;
@@ -9,7 +9,7 @@ export type Config = {
   margin: string;
   overlap: string;
   orientation: Orientation;
-  fit: ImageFit;
+  imageAdjustment: ImageAdjustment;
   dpi: 150 | 200 | 300;
   cropMarks: boolean;
   alignmentMarks: boolean;
@@ -25,7 +25,7 @@ export const initial: Config = {
   margin: '5',
   overlap: '5',
   orientation: 'auto',
-  fit: 'contain',
+  imageAdjustment: DEFAULT_IMAGE_ADJUSTMENT,
   dpi: 200,
   cropMarks: true,
   alignmentMarks: true,

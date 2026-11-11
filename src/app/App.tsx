@@ -6,7 +6,7 @@ import { useRegisterSW } from 'virtual:pwa-register/preact';
 import { APP_CONFIG } from '../config/app';
 import { PAPERS } from '../config/papers';
 import { calculateLayout } from '../core/tiling';
-import { fitImage } from '../core/image-fit';
+import { DEFAULT_IMAGE_ADJUSTMENT, orientedSize, placeImage } from '../core/image-fit';
 import { planRaster } from '../core/raster-plan';
 import { formatNumber, formatSize } from '../core/units';
 import { loadImage, type LoadedImage } from '../image/decode-image';
@@ -14,6 +14,7 @@ import { createPdf } from '../pdf/client';
 import type { PdfOptions, Progress } from '../pdf/types';
 import { pdfFilename } from '../utils/filename';
 import { Header } from '../components/Header';
+import { ImageAdjustment } from '../components/ImageAdjustment';
 import { SectionNavigation } from '../components/SectionNavigation';
 import { TypewriterWord } from '../components/TypewriterWord';
 import { PosterPreview } from '../components/PosterPreview';
@@ -149,6 +150,10 @@ export function App() {
         return;
       }
       setImage(next);
+      setConfig((c) => ({
+        ...c,
+        imageAdjustment: { ...DEFAULT_IMAGE_ADJUSTMENT, fit: c.imageAdjustment.fit },
+      }));
       setStatus({ kind: 'ready' });
     } catch (e) {
       if (sequence === uploadSequence.current)
@@ -199,15 +204,17 @@ export function App() {
   }
   let quality = 0;
   if (image && layout) {
-    const r = fitImage(
+    const r = placeImage(
       image.width,
       image.height,
       layout.posterWidthMm,
       layout.posterHeightMm,
-      config.fit,
+      config.imageAdjustment,
     );
+    const printSize = orientedSize(r.width, r.height, config.imageAdjustment.rotation);
     quality = Math.round(
-      planRaster(image.width, image.height, r.width, r.height, config.dpi).effectivePpi,
+      planRaster(image.width, image.height, printSize.width, printSize.height, config.dpi)
+        .effectivePpi,
     );
   }
   return (
@@ -409,7 +416,16 @@ export function App() {
               showValidation={validateDimensions}
               error={calculation.error}
             />
-            {layout && <PosterPreview image={image} layout={layout} fit={config.fit} />}
+            {image && layout && (
+              <ImageAdjustment
+                value={config.imageAdjustment}
+                change={(value) => change('imageAdjustment', value)}
+                busy={busy}
+              />
+            )}
+            {layout && (
+              <PosterPreview image={image} layout={layout} adjustment={config.imageAdjustment} />
+            )}
             <div class="pdf-action">
               {status.kind === 'generating' ? (
                 <div class="progress" role="status">

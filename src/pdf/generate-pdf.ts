@@ -1,5 +1,5 @@
 import { APP_CONFIG } from '../config/app';
-import { fitImage } from '../core/image-fit';
+import { orientedSize, placeImage } from '../core/image-fit';
 import { planRaster } from '../core/raster-plan';
 import { decodeImage, rasterize, validateImage } from '../image/decode-image';
 import type { PdfRequest, Progress } from './types';
@@ -21,20 +21,21 @@ export async function generatePdf(
   checkCancelled(signal);
   const meta = await validateImage(file);
   const decoded = await decodeImage(file);
-  const fitted = fitImage(
+  const fitted = placeImage(
     decoded.width,
     decoded.height,
     layout.posterWidthMm,
     layout.posterHeightMm,
-    options.fit,
+    options.imageAdjustment,
   );
+  const printSize = orientedSize(fitted.width, fitted.height, options.imageAdjustment.rotation);
   let blob: Blob;
   try {
     const raster = planRaster(
       decoded.width,
       decoded.height,
-      fitted.width,
-      fitted.height,
+      printSize.width,
+      printSize.height,
       options.dpi,
     );
     blob = await rasterize(

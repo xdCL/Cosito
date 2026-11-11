@@ -11,6 +11,7 @@ import {
 import { createCanvas } from '@napi-rs/canvas';
 import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs';
 import { calculateLayout } from '../src/core/tiling';
+import { DEFAULT_IMAGE_ADJUSTMENT } from '../src/core/image-fit';
 import { mmToPt, ptToMm } from '../src/core/units';
 import { renderCalibration, renderGuide, renderTile } from '../src/pdf/render-page';
 import { fixtureColor, fixturePng } from '../scripts/generate-fixtures';
@@ -24,7 +25,7 @@ const base = {
   orientation: 'portrait' as const,
 };
 const options = {
-  fit: 'contain' as const,
+  imageAdjustment: DEFAULT_IMAGE_ADJUSTMENT,
   dpi: 200 as const,
   cropMarks: true,
   alignmentMarks: true,

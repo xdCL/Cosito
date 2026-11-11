@@ -1,55 +1,47 @@
-import { useEffect, useRef } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import type { Layout } from '../core/tiling';
-import { fitImage, type ImageFit } from '../core/image-fit';
+import { imageTransform, placeImage, type ImageAdjustment } from '../core/image-fit';
 import { LIMITS } from '../config/limits';
 import type { LoadedImage } from '../image/decode-image';
 export function PosterPreview({
   image,
   layout,
-  fit,
+  adjustment,
 }: {
   image: LoadedImage | null;
   layout: Layout;
-  fit: ImageFit;
+  adjustment: ImageAdjustment;
 }) {
   const ref = useRef<HTMLCanvasElement>(null);
+  const [thumbnail, setThumbnail] = useState<{ source: HTMLImageElement; url: string }>();
+  const { posterWidthMm, posterHeightMm } = layout;
+  const scale = LIMITS.maxPreviewSide / Math.max(posterWidthMm, posterHeightMm);
+  const width = Math.max(1, Math.round(posterWidthMm * scale));
+  const height = Math.max(1, Math.round(posterHeightMm * scale));
   useEffect(() => {
-    let cancelled = false;
-    const canvas = ref.current;
-    if (!canvas) return;
-    const scale = Math.min(
-      LIMITS.maxPreviewSide / layout.posterWidthMm,
-      LIMITS.maxPreviewSide / layout.posterHeightMm,
-    );
-    canvas.width = Math.max(1, Math.round(layout.posterWidthMm * scale));
-    canvas.height = Math.max(1, Math.round(layout.posterHeightMm * scale));
-    const draw = (source?: HTMLImageElement) => {
-      if (cancelled) return;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-      ctx.fillStyle = 'white';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      if (source && image) {
-        const r = fitImage(image.width, image.height, canvas.width, canvas.height, fit);
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
-        ctx.drawImage(source, r.x, r.y, r.width, r.height);
-      }
-    };
-    draw();
-    const img = new Image();
-    if (image) {
-      img.onload = () => draw(img);
-      img.src = image.previewUrl;
-    }
+    if (!image) return;
+    const source = new Image();
+    source.onload = () => setThumbnail({ source, url: image.previewUrl });
+    source.src = image.previewUrl;
     return () => {
-      cancelled = true;
-      img.onload = null;
-      img.src = '';
-      canvas.width = 1;
-      canvas.height = 1;
+      source.onload = null;
+      source.src = '';
     };
-  }, [image, layout, fit]);
+  }, [image]);
+  useEffect(() => {
+    const ctx = ref.current?.getContext('2d');
+    if (!ctx) return;
+    ctx.resetTransform();
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, width, height);
+    if (!image || thumbnail?.url !== image.previewUrl) return;
+    const fitted = placeImage(image.width, image.height, posterWidthMm, posterHeightMm, adjustment);
+    ctx.scale(width / posterWidthMm, height / posterHeightMm);
+    ctx.transform(...imageTransform(fitted, adjustment.rotation));
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(thumbnail.source, 0, 0, 1, 1);
+  }, [image, thumbnail, posterWidthMm, posterHeightMm, width, height, adjustment]);
   return (
     <figure class="preview-figure">
       <div
@@ -59,7 +51,12 @@ export function PosterPreview({
           width: `min(100%, ${Math.min(245, (420 * layout.posterWidthMm) / layout.posterHeightMm)}px)`,
         }}
       >
-        <canvas ref={ref} aria-label="Vista previa de la imagen a su proporción final" />
+        <canvas
+          ref={ref}
+          width={width}
+          height={height}
+          aria-label="Vista previa de la imagen a su proporción final"
+        />
         <div class="tile-overlay" aria-hidden="true">
           {layout.tiles.map((tile) => {
             const r = tile.posterRectMm;

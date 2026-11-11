@@ -60,12 +60,12 @@ test('papel personalizado, ajustes y recuperación de error PDF', async ({ page 
   await page.getByLabel('Papel', { exact: true }).selectOption('custom');
   await page.getByLabel('Ancho del papel', { exact: false }).fill('12');
   await page.getByLabel('Alto del papel', { exact: false }).fill('15');
-  await page.locator('.advanced > summary').click();
   await page.getByLabel('Ajuste de la imagen').selectOption('stretch');
   await expect(
     page.getByText('Esta opción puede modificar las proporciones de la imagen.'),
   ).toBeVisible();
   await page.getByLabel('Ajuste de la imagen').selectOption('cover');
+  await page.locator('.advanced > summary').click();
   await page.getByLabel('Margen seguro (mm)').fill('0');
   await page.getByLabel('Solape: contenido repetido (mm)').fill('0');
   await expect(page.locator('.sheet-count')).toHaveText('1 hoja');

@@ -35,7 +35,7 @@ test('una columna centrada y navegación flotante en ambas skins y tamaños', as
         await expect(target).toBeFocused();
         await expect(page).toHaveURL(new RegExp(`#${id}$`));
         await expect(toggle).toBeInViewport();
-        if (id === 'opciones') await expect(page.getByLabel('Ajuste de la imagen')).toBeVisible();
+        if (id === 'opciones') await expect(page.getByLabel('Margen seguro (mm)')).toBeVisible();
       }
       expect(
         await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),

@@ -1,7 +1,6 @@
 import type { Config, ChangeConfig } from '../app/configuration';
 import { numeric } from '../app/configuration';
 import { LIMITS } from '../config/limits';
-import type { ImageFit } from '../core/image-fit';
 import type { Layout, Orientation } from '../core/tiling';
 export function AdvancedOptions({
   config,
@@ -24,17 +23,6 @@ export function AdvancedOptions({
       <fieldset disabled={busy}>
         <legend class="sr-only">Opciones de impresión</legend>
         <div class="advanced-grid">
-          <label>
-            Ajuste de la imagen
-            <select
-              value={config.fit}
-              onChange={(e) => change('fit', e.currentTarget.value as ImageFit)}
-            >
-              <option value="contain">Ver imagen completa</option>
-              <option value="cover">Cubrir todo</option>
-              <option value="stretch">Ajustar exacto</option>
-            </select>
-          </label>
           <label>
             Orientación
             <select
@@ -84,10 +72,6 @@ export function AdvancedOptions({
             </select>
           </label>
         </div>
-        {config.fit === 'stretch' && (
-          <p class="warning">Esta opción puede modificar las proporciones de la imagen.</p>
-        )}
-        {config.fit === 'cover' && <p>Se recortan bordes para cubrir todo el tamaño.</p>}
         {quality > 0 && (
           <p>
             Calidad estimada: {quality} ppp

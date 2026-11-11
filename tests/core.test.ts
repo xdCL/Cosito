@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { calculateLayout, rowLabel } from '../src/core/tiling';
 import { cmToMm, mmToCm, mmToPt, ptToMm, inToMm, mmToIn, mmToPx } from '../src/core/units';
-import { fitImage } from '../src/core/image-fit';
+import { DEFAULT_IMAGE_ADJUSTMENT, fitImage, placeImage } from '../src/core/image-fit';
 import { PAPERS } from '../src/config/papers';
 const base = {
   posterWidthMm: 500,
@@ -122,6 +122,35 @@ describe('motor de mosaico', () => {
   });
 });
 describe('ajuste de imagen', () => {
+  it('coloca la imagen girada respecto del póster completo y ancla también el recorte', () => {
+    expect(placeImage(200, 100, 300, 300, { ...DEFAULT_IMAGE_ADJUSTMENT, rotation: 90 })).toEqual({
+      x: 75,
+      y: 0,
+      width: 150,
+      height: 300,
+    });
+    expect(
+      placeImage(200, 100, 300, 300, { ...DEFAULT_IMAGE_ADJUSTMENT, rotation: 270, alignX: 'end' }),
+    ).toEqual({
+      x: 150,
+      y: 0,
+      width: 150,
+      height: 300,
+    });
+    expect(
+      placeImage(200, 100, 300, 300, {
+        ...DEFAULT_IMAGE_ADJUSTMENT,
+        fit: 'cover',
+        rotation: 90,
+        alignY: 'end',
+      }),
+    ).toEqual({
+      x: 0,
+      y: -300,
+      width: 300,
+      height: 600,
+    });
+  });
   it('contain, cover y stretch centrados', () => {
     expect(fitImage(200, 100, 100, 100, 'contain')).toEqual({
       x: 0,

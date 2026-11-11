@@ -19,6 +19,8 @@ Vite avisa que `theme-init.js` es un script clásico sin `type="module"`. Es int
 
 ## Exactitud y contenido
 
+El editor **Ajustar imagen** pasa una prueba de navegador en Chromium y WebKit que gira una imagen de cuadrantes a ambos lados, la desplaza, vuelve al centro y compara los colores del lienzo con los de las cuatro hojas renderizadas del PDF. El cambio conserva las medidas del póster e invalida el PDF anterior. La geometría incluye también una comprobación de posición con recorte; pasan 26 tests unitarios.
+
 Después del último ajuste visual (dimensiones del papel visibles también fuera del select), `npm run check` y `npm run format:check` pasaron de nuevo, junto con los dos tests responsive de Chromium y WebKit. El smoke de desarrollo en `http://localhost:5173/` comprobó selección, tema claro, generación y descarga. Se guardaron un PDF real en `artifacts/cosito-50x98-carta.pdf` y una captura clara en `artifacts/desktop.png`.
 
 - Carta, 5 mm de margen y 5 mm de solape, 500 × 980 mm: **10 hojas horizontales, 2 columnas × 5 filas**. Vertical requiere 12.

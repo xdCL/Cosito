@@ -1,5 +1,6 @@
 import {
   clip,
+  degrees,
   endPath,
   popGraphicsState,
   pushGraphicsState,
@@ -11,6 +12,7 @@ import {
   type PDFPage,
 } from 'pdf-lib';
 import { APP_CONFIG } from '../config/app';
+import { imageTransform, orientedSize } from '../core/image-fit';
 import type { Layout, Rect, Tile } from '../core/tiling';
 import { formatSize, mmToPt } from '../core/units';
 import type { PdfOptions } from './types';
@@ -47,11 +49,16 @@ export function renderTile(
     clip(),
     endPath(),
   );
+  const { rotation } = options.imageAdjustment;
+  const [, , c, d, x, y] = imageTransform(fitted, rotation);
+  const size = orientedSize(fitted.width, fitted.height, rotation);
+  // The PDF image origin is the source's bottom-left (0, 1 in the preview).
   page.drawImage(image, {
-    x: mmToPt(p.x + fitted.x - r.x),
-    y: mmToPt(layout.paperHeightMm - p.y - fitted.y + r.y - fitted.height),
-    width: mmToPt(fitted.width),
-    height: mmToPt(fitted.height),
+    x: mmToPt(p.x + x + c - r.x),
+    y: mmToPt(layout.paperHeightMm - p.y - y - d + r.y),
+    width: mmToPt(size.width),
+    height: mmToPt(size.height),
+    rotate: degrees(-rotation),
   });
   page.pushOperators(popGraphicsState());
   // Keep the outgoing repeated strip. Trim incoming left/top strips.
