@@ -3,6 +3,7 @@
 **Imprime imágenes grandes usando las hojas que ya tienes.**
 
 Cosito convierte una imagen en un mosaico de hojas listo para imprimir y montar.
+También prepara hojas de stickers, tarjetas o credenciales repitiendo una imagen a tamaño real.
 
 **[Usar el cosito](https://xdcl.github.io/Cosito/)**
 
@@ -17,11 +18,25 @@ Desarrollado por **xdCL**. Versión **0.1.0**, licencia MIT.
 3. Elige Carta / Letter, A4, Oficio (21,6 × 33 cm), Legal o papel personalizado.
 4. En **Ajustar imagen**, puedes girarla 90° a izquierda o derecha, centrarla o elegir su posición. Revisa el mosaico y pulsa **Crear PDF**, luego **Descargar PDF**.
 5. Imprime usando **Tamaño real / 100 %**. Desactiva **Ajustar a página**.
-6. Recorta los márgenes. En hojas con vecinos a la izquierda o arriba, recorta también la banda repetida izquierda o superior. Conserva esas bandas en los bordes externos. Junta los bordes recortados y pega por detrás siguiendo A1, A2…; B1, B2…
+6. Recorta los márgenes. En hojas con vecinos **impresos** a la izquierda o arriba, recorta también la banda repetida izquierda o superior. Conserva esas bandas en los bordes externos. Junta los bordes recortados y pega por detrás siguiendo A1, A2…; B1, B2…
 
 Predeterminado: margen seguro 5 mm, solape 5 mm, imagen completa y orientación automática. El solape repite contenido; **no aumenta el tamaño final**. Puedes cubrir todo recortando bordes o ajustar exacto deformando la imagen. Opciones avanzadas incluyen calidad, orientación, marcas y páginas opcionales de guía y calibración; no se añaden hojas extra por defecto.
 
 Los ajustes de la imagen se aplican al póster completo, con las mismas medidas y hojas. **Centrar imagen** alinea ambos ejes sin quitar el giro; con **Cubrir todo**, la posición elige qué parte queda dentro del recorte.
+
+Por defecto se omiten las hojas sin contenido visible: fuera de la imagen, transparentes o blancas sobre papel blanco. Se conserva cualquier píxel no blanco, incluso muy tenue. El análisis se realiza sobre la imagen normalizada que se imprimirá; una franja de un píxel evita descartar bordes por interpolación. La vista previa anticipa las hojas fuera de la imagen y, al generar, actualiza el resultado con las blancas/transparentes detectadas. Las posiciones originales se conservan en la guía, con casillas sin número para lo omitido. Desactiva **Omitir hojas sin contenido visible** para imprimir también esos espacios.
+
+## Stickers, tarjetas y credenciales
+
+1. Elige **Stickers y tarjetas** y carga un PNG, JPG o WEBP. Puede tener transparencia.
+2. Selecciona un formato de pieza o escribe sus medidas reales en centímetros. Los formatos de referencia son editables: sticker de 5 × 5 cm, tarjeta de 9 × 5 cm y credencial de 8,56 × 5,398 cm. Comprueba las medidas de tu tarjeta o soporte antes de imprimir.
+3. Elige el papel: Carta, A4, Oficio, Legal o personalizado. El A4 adhesivo utiliza las mismas medidas que A4.
+4. Ajusta la **Separación entre piezas** en milímetros. El **Margen seguro** de Opciones avanzadas se aplica al borde del papel.
+5. Deja **Copias por hoja** vacío para usar la mayor capacidad de una cuadrícula regular, o indica una cantidad. El motor compara ambas orientaciones del papel y, si lo permites, un giro de 90° de las piezas. No reduce sus medidas para hacerlas caber.
+6. Elige **Llenar hojas** para llenar una o más hojas, o **Cantidad total** para imprimir exactamente esa cantidad. Por ejemplo, 100 copias a 6 por hoja producen **17 hojas**, con **4 copias en la última**. Puedes previsualizar la primera y la última.
+7. Descarga el PDF e imprime a **Tamaño real / 100 %**, sin ajustar a página. Las líneas de corte son opcionales; los contornos de la vista previa no se imprimen si no las activas.
+
+Los límites de esta modalidad son 500 piezas por hoja, 10.000 copias y 100 hojas. La cuadrícula distribuye piezas rectangulares uniformes; no corresponde a plantillas de etiquetas precortadas ni hace cortes de contorno. No se infiere un tamaño físico fiable de los píxeles de una imagen: lo determinas tú con las medidas de la pieza.
 
 ## Funciones
 

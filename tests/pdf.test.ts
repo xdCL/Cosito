@@ -11,9 +11,10 @@ import {
 import { createCanvas } from '@napi-rs/canvas';
 import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs';
 import { calculateLayout } from '../src/core/tiling';
-import { DEFAULT_IMAGE_ADJUSTMENT } from '../src/core/image-fit';
+import { DEFAULT_IMAGE_ADJUSTMENT, placeImage } from '../src/core/image-fit';
+import { calculateRepetition } from '../src/core/repetition';
 import { mmToPt, ptToMm } from '../src/core/units';
-import { renderCalibration, renderGuide, renderTile } from '../src/pdf/render-page';
+import { renderCalibration, renderGuide, renderTile, renderCopies } from '../src/pdf/render-page';
 import { fixtureColor, fixturePng } from '../scripts/generate-fixtures';
 const base = {
   posterWidthMm: 500,
@@ -35,6 +36,54 @@ const options = {
   paperName: 'Carta / Letter',
 };
 describe('PDF físico e imagen compartida', () => {
+  it('gira credenciales para aprovechar A4 sin cambiar el tamaño físico ni sus márgenes', async () => {
+    const source = createCanvas(100, 200);
+    const pixels = source.getContext('2d');
+    pixels.fillStyle = '#ff0000';
+    pixels.fillRect(0, 0, 100, 100);
+    pixels.fillStyle = '#0000ff';
+    pixels.fillRect(0, 100, 100, 100);
+    const layout = calculateRepetition({
+      widthMm: 53.98,
+      heightMm: 85.6,
+      paperWidthMm: 210,
+      paperHeightMm: 297,
+      marginMm: 5,
+      gapMm: 3,
+      orientation: 'portrait',
+      allowRotation: true,
+      run: { kind: 'sheets', count: 1 },
+    });
+    const fitted = placeImage(100, 200, layout.widthMm, layout.heightMm, DEFAULT_IMAGE_ADJUSTMENT);
+    const doc = await PDFDocument.create();
+    const image = await doc.embedPng(source.toBuffer('image/png'));
+    renderCopies(doc, image, layout, layout.perSheet, fitted, 0, false);
+    const task = getDocument({ data: await doc.save(), useSystemFonts: true });
+    try {
+      const pdf = await task.promise;
+      const page = await pdf.getPage(1);
+      const viewport = page.getViewport({ scale: 1 });
+      const canvas = createCanvas(Math.ceil(viewport.width), Math.ceil(viewport.height));
+      await page.render({ canvas: canvas as unknown as HTMLCanvasElement, viewport }).promise;
+      const ctx = canvas.getContext('2d');
+      expect(layout.rotated).toBe(true);
+      for (const slot of layout.slots) {
+        expect(slot.width).toBeCloseTo(85.6, 6);
+        expect(slot.height).toBeCloseTo(53.98, 6);
+        const sample = (x: number, y: number) =>
+          Array.from(
+            ctx
+              .getImageData(Math.round(mmToPt(slot.x + x)), Math.round(mmToPt(slot.y + y)), 1, 1)
+              .data.slice(0, 3),
+          );
+        expect(sample(20, 26.99)).toEqual([0, 0, 255]);
+        expect(sample(65, 26.99)).toEqual([255, 0, 0]);
+        expect(sample(20, 2)).toEqual([255, 255, 255]);
+      }
+    } finally {
+      await task.destroy();
+    }
+  });
   it('lee primera y última página: Carta vertical exacta (1e-6 mm)', async () => {
     const layout = calculateLayout(base);
     const doc = await PDFDocument.create();

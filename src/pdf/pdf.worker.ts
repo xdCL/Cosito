@@ -2,10 +2,13 @@ import { generatePdf } from './generate-pdf';
 import type { PdfRequest } from './types';
 self.onmessage = async (event: MessageEvent<PdfRequest>) => {
   try {
-    const bytes = await generatePdf(event.data, (progress) =>
+    const result = await generatePdf(event.data, (progress) =>
       self.postMessage({ type: 'progress', progress }),
     );
-    self.postMessage({ type: 'complete', bytes }, { transfer: [bytes.buffer as ArrayBuffer] });
+    self.postMessage(
+      { type: 'complete', result },
+      { transfer: [result.bytes.buffer as ArrayBuffer] },
+    );
   } catch (error) {
     self.postMessage({
       type: 'error',

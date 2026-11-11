@@ -9,7 +9,7 @@ const sections = [
   ['montaje', 'Guía de montaje'],
 ] as const;
 
-export function SectionNavigation() {
+export function SectionNavigation({ repeating }: { repeating: boolean }) {
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
   const toggle = useRef<HTMLButtonElement>(null);
@@ -89,7 +89,11 @@ export function SectionNavigation() {
             }}
           >
             <span aria-hidden="true">{index + 1}</span>
-            {label}
+            {repeating && id === 'medidas'
+              ? 'Tamaño y cantidad'
+              : repeating && id === 'montaje'
+                ? 'Guía de impresión'
+                : label}
           </a>
         ))}
       </nav>

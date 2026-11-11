@@ -242,6 +242,51 @@ footer {
   gap: 32px;
   grid-template-columns: minmax(0, 1fr);
 }
+.project-mode {
+  margin-bottom: 32px;
+  text-align: center;
+}
+.project-mode legend {
+  margin-inline: auto;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 1.25rem;
+}
+.project-mode > div {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.project-mode button[aria-pressed='true'] {
+  background: var(--color-action);
+  color: var(--color-action-text);
+}
+.repeat-settings {
+  display: grid;
+  gap: 12px;
+}
+.repeat-settings .section-note {
+  margin: 0;
+}
+.repeat-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  align-items: end;
+}
+.repeat-preview-selector {
+  width: min(100%, 240px);
+  margin: 0 auto 12px;
+}
+.repeat-paper {
+  display: block;
+  width: min(100%, 320px);
+  max-height: 420px;
+  margin-inline: auto;
+  border: 1px solid var(--color-paper-line);
+  background: var(--color-paper);
+}
 .configuration {
   min-width: 0;
   display: grid;
@@ -515,6 +560,10 @@ footer {
   border-radius: 4px;
   font-size: 0.75rem;
   font-weight: 600;
+}
+.preview-tile.omitted {
+  border-style: dashed;
+  background: repeating-linear-gradient(-45deg, transparent 0 5px, #60586b15 5px 6px);
 }
 .preview-tile small {
   font-size: 0.55rem;

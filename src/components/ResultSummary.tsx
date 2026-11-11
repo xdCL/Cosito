@@ -6,12 +6,14 @@ export function ResultSummary({
   paperName,
   showValidation,
   error,
+  omitted,
 }: {
   hasImage: boolean;
   layout: Layout | null;
   paperName: string;
   showValidation: boolean;
   error: string;
+  omitted: number;
 }) {
   return (
     <div class="result-summary" aria-live="polite">
@@ -31,6 +33,14 @@ export function ResultSummary({
               {layout.columns} columnas × {layout.rows} filas
             </strong>
           </p>
+          {omitted > 0 && (
+            <p class="savings">
+              {omitted === 1
+                ? 'Se omite 1 hoja sin contenido'
+                : `Se omiten ${omitted} hojas sin contenido`}
+              .
+            </p>
+          )}
           <p class="finished-size">
             Tamaño terminado:{' '}
             <strong>{formatSize(layout.posterWidthMm, layout.posterHeightMm)}</strong>

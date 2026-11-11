@@ -12,7 +12,8 @@ import {
   type PDFPage,
 } from 'pdf-lib';
 import { APP_CONFIG } from '../config/app';
-import { imageTransform, orientedSize } from '../core/image-fit';
+import { imageTransform, orientedSize, type ImageRotation } from '../core/image-fit';
+import { placeCopy, type RepeatLayout } from '../core/repetition';
 import type { Layout, Rect, Tile } from '../core/tiling';
 import { formatSize, mmToPt } from '../core/units';
 import type { PdfOptions } from './types';
@@ -30,6 +31,63 @@ function text(page: PDFPage, font: PDFFont, value: string, x: number, y: number,
   const safe = value.replace(/[^\x20-\x7e\u00a0-\u00ff×]/g, '?');
   page.drawText(safe, { font, size, x: mmToPt(x), y: mmToPt(y), color: ink });
 }
+function drawClippedImage(
+  page: PDFPage,
+  image: PDFImage,
+  paperHeight: number,
+  clipRect: Rect,
+  fitted: Rect,
+  rotation: ImageRotation,
+) {
+  page.pushOperators(
+    pushGraphicsState(),
+    rectangle(
+      mmToPt(clipRect.x),
+      mmToPt(paperHeight - clipRect.y - clipRect.height),
+      mmToPt(clipRect.width),
+      mmToPt(clipRect.height),
+    ),
+    clip(),
+    endPath(),
+  );
+  const [, , c, d, x, y] = imageTransform(fitted, rotation);
+  const size = orientedSize(fitted.width, fitted.height, rotation);
+  // The PDF image origin is the source's bottom-left (0, 1 in the preview).
+  page.drawImage(image, {
+    x: mmToPt(x + c),
+    y: mmToPt(paperHeight - y - d),
+    width: mmToPt(size.width),
+    height: mmToPt(size.height),
+    rotate: degrees(-rotation),
+  });
+  page.pushOperators(popGraphicsState());
+}
+
+export function renderCopies(
+  doc: PDFDocument,
+  image: PDFImage,
+  layout: RepeatLayout,
+  count: number,
+  fitted: Rect,
+  rotation: ImageRotation,
+  cutGuides: boolean,
+) {
+  const page = doc.addPage([mmToPt(layout.paperWidthMm), mmToPt(layout.paperHeightMm)]);
+  for (const slot of layout.slots.slice(0, count)) {
+    const copy = placeCopy(layout, slot, fitted, rotation);
+    drawClippedImage(page, image, layout.paperHeightMm, slot, copy.rect, copy.rotation);
+    if (cutGuides)
+      page.drawRectangle({
+        x: mmToPt(slot.x),
+        y: mmToPt(layout.paperHeightMm - slot.y - slot.height),
+        width: mmToPt(slot.width),
+        height: mmToPt(slot.height),
+        borderWidth: 0.3,
+        borderColor: rgb(0.6, 0.6, 0.6),
+      });
+  }
+}
+
 export function renderTile(
   doc: PDFDocument,
   image: PDFImage,
@@ -43,24 +101,14 @@ export function renderTile(
   const r = tile.posterRectMm;
   const p = tile.pageRectMm;
   const bottom = layout.paperHeightMm - p.y - p.height;
-  page.pushOperators(
-    pushGraphicsState(),
-    rectangle(mmToPt(p.x), mmToPt(bottom), mmToPt(p.width), mmToPt(p.height)),
-    clip(),
-    endPath(),
+  drawClippedImage(
+    page,
+    image,
+    layout.paperHeightMm,
+    p,
+    { ...fitted, x: p.x + fitted.x - r.x, y: p.y + fitted.y - r.y },
+    options.imageAdjustment.rotation,
   );
-  const { rotation } = options.imageAdjustment;
-  const [, , c, d, x, y] = imageTransform(fitted, rotation);
-  const size = orientedSize(fitted.width, fitted.height, rotation);
-  // The PDF image origin is the source's bottom-left (0, 1 in the preview).
-  page.drawImage(image, {
-    x: mmToPt(p.x + x + c - r.x),
-    y: mmToPt(layout.paperHeightMm - p.y - y - d + r.y),
-    width: mmToPt(size.width),
-    height: mmToPt(size.height),
-    rotate: degrees(-rotation),
-  });
-  page.pushOperators(popGraphicsState());
   // Keep the outgoing repeated strip. Trim incoming left/top strips.
   // Marks live in discarded margins; no watermark or lines on the final image.
   const left = p.x + tile.overlap.left;
@@ -132,6 +180,20 @@ export function renderGuide(doc: PDFDocument, font: PDFFont, layout: Layout, opt
   ];
   info.forEach((s, i) => text(page, font, s, 12, height - 32 - i * 7));
   const cell = Math.min((width - 24) / layout.columns, (height - 125) / layout.rows, 28);
+  if (layout.sheetCount < layout.columns * layout.rows) {
+    const printed = new Set(layout.tiles.map((tile) => tile.row * layout.columns + tile.column));
+    for (let i = 0; i < layout.columns * layout.rows; i++) {
+      if (printed.has(i)) continue;
+      page.drawRectangle({
+        x: mmToPt(12 + (i % layout.columns) * cell),
+        y: mmToPt(height - 78 - (Math.floor(i / layout.columns) + 1) * cell),
+        width: mmToPt(cell),
+        height: mmToPt(cell),
+        borderWidth: 0.3,
+        borderColor: rgb(0.7, 0.7, 0.7),
+      });
+    }
+  }
   for (const tile of layout.tiles) {
     const x = 12 + tile.column * cell,
       y = height - 78 - (tile.row + 1) * cell;
@@ -152,7 +214,15 @@ export function renderGuide(doc: PDFDocument, font: PDFFont, layout: Layout, opt
       Math.min(10, mmToPt(cell) / 6),
     );
   }
-  text(page, font, '1. Ordena las hojas por filas: A1, A2…; B1, B2…', 12, 38);
+  text(
+    page,
+    font,
+    layout.sheetCount < layout.columns * layout.rows
+      ? '1. Ordena las hojas por filas. Las celdas vacías se omiten.'
+      : '1. Ordena las hojas por filas: A1, A2…; B1, B2…',
+    12,
+    38,
+  );
   text(
     page,
     font,

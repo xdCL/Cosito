@@ -3,6 +3,7 @@ export function pdfFilename(
   widthMm: number,
   heightMm: number,
   paper: string,
+  copies?: number,
 ): string {
   const clean = (s: string) =>
     s
@@ -12,6 +13,7 @@ export function pdfFilename(
       .replace(/[^a-z0-9-]+/g, '-')
       .replace(/^-|-$/g, '')
       .slice(0, 60);
-  return `${clean(name.replace(/\.[^.]+$/, '')) || 'imagen'}-${widthMm / 10}x${heightMm / 10}cm-${clean(paper)}-${APP_CONFIG.name.toLowerCase()}.pdf`;
+  const run = copies === undefined ? '' : `-${copies}-copias`;
+  return `${clean(name.replace(/\.[^.]+$/, '')) || 'imagen'}-${widthMm / 10}x${heightMm / 10}cm-${clean(paper)}${run}-${APP_CONFIG.name.toLowerCase()}.pdf`;
 }
 import { APP_CONFIG } from '../config/app';

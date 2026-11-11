@@ -67,20 +67,23 @@ export function canvasBlob(canvas: HTMLCanvasElement, type: string): Promise<Blo
     ),
   );
 }
+export type RasterReader = Pick<CanvasRenderingContext2D, 'getImageData'>;
 export async function rasterize(
   image: DecodedImage,
   width: number,
   height: number,
   type: string,
+  inspect?: (reader: RasterReader) => void,
 ): Promise<Blob> {
   if (typeof OffscreenCanvas === 'function') {
     const canvas = new OffscreenCanvas(width, height);
     try {
-      const context = canvas.getContext('2d');
+      const context = canvas.getContext('2d', { willReadFrequently: !!inspect });
       if (!context) throw new Error('Este navegador no permite preparar la imagen.');
       context.imageSmoothingEnabled = true;
       context.imageSmoothingQuality = 'high';
       context.drawImage(image.source, 0, 0, width, height);
+      inspect?.(context);
       return await canvas.convertToBlob({ type, quality: 0.94 });
     } catch {
       if (typeof document === 'undefined')
@@ -95,11 +98,12 @@ export async function rasterize(
   canvas.width = width;
   canvas.height = height;
   try {
-    const context = canvas.getContext('2d');
+    const context = canvas.getContext('2d', { willReadFrequently: !!inspect });
     if (!context) throw new Error('Este navegador no permite preparar la imagen.');
     context.imageSmoothingEnabled = true;
     context.imageSmoothingQuality = 'high';
     context.drawImage(image.source, 0, 0, width, height);
+    inspect?.(context);
     return await canvasBlob(canvas, type);
   } finally {
     canvas.width = 1;

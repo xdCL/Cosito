@@ -9,10 +9,12 @@ export function ImageAdjustment({
   value,
   change,
   busy,
+  repeating,
 }: {
   value: Adjustment;
   change: (value: Adjustment) => void;
   busy: boolean;
+  repeating: boolean;
 }) {
   const rotate = (degrees: 90 | -90) =>
     change({ ...value, rotation: ((value.rotation + degrees + 360) % 360) as ImageRotation });
@@ -20,7 +22,9 @@ export function ImageAdjustment({
     <fieldset class="image-adjustment" disabled={busy} aria-describedby="image-adjustment-help">
       <legend>Ajustar imagen</legend>
       <p id="image-adjustment-help" class="section-note">
-        Los ajustes se aplican al lienzo completo, antes de dividirlo en hojas.
+        {repeating
+          ? 'Los ajustes se aplican por igual a todas las piezas.'
+          : 'Los ajustes se aplican al lienzo completo, antes de dividirlo en hojas.'}
       </p>
       <div class="image-adjustment-actions">
         <button type="button" aria-label="Girar 90° a la izquierda" onClick={() => rotate(-90)}>

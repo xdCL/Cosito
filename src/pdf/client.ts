@@ -1,10 +1,10 @@
-import type { PdfRequest, Progress } from './types';
+import type { PdfRequest, PdfResult, Progress } from './types';
 /** Worker termination cancels decoding, embedding and saving immediately. */
 export async function createPdf(
   request: PdfRequest,
   progress: (p: Progress) => void,
   signal: AbortSignal,
-): Promise<Uint8Array> {
+): Promise<PdfResult> {
   if (
     typeof Worker === 'function' &&
     typeof OffscreenCanvas === 'function' &&
@@ -43,7 +43,7 @@ export async function createPdf(
         if (data.type === 'progress') progress(data.progress);
         else if (data.type === 'complete') {
           dispose();
-          resolve(data.bytes);
+          resolve(data.result);
         } else if (data.message?.includes('en este navegador')) {
           fallback();
         } else {

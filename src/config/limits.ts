@@ -2,6 +2,8 @@
 export const LIMITS = {
   maxPosterMm: 100_000,
   maxPages: 100,
+  maxCopiesPerSheet: 500,
+  maxCopies: 10000,
   maxFileBytes: 30 * 1024 * 1024,
   maxSourcePixels: 24_000_000,
   maxSourceSide: 16_384,

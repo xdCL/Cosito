@@ -19,6 +19,8 @@ Vite avisa que `theme-init.js` es un script clásico sin `type="module"`. Es int
 
 ## Exactitud y contenido
 
+Actualización de impresión del 10 de noviembre de 2026: **31 unitarios** correctos y **47 E2E Chromium/WebKit** correctos, con la misma omisión offline de WebKit. Se exporta un mosaico que contiene una región blanca y otra transparente: se reduce de 3 hojas a 1, conserva la coordenada A2 y vuelve a 3 al desactivar la omisión. Un PNG con transparencia se exporta como 100 copias a 6 por hoja: 17 páginas A4, 6 referencias a la misma imagen por página y 4 en la última. La vista previa renderiza el dibujo y la última hoja parcial. Las credenciales giradas se renderizan y muestrean en PDF para comprobar orientación, dimensiones de 85,6 × 53,98 mm y márgenes. El detector conserva un píxel de tinta #FEFEFE y se comprueba con giros de 90° y 270°.
+
 El editor **Ajustar imagen** pasa una prueba de navegador en Chromium y WebKit que gira una imagen de cuadrantes a ambos lados, la desplaza, vuelve al centro y compara los colores del lienzo con los de las cuatro hojas renderizadas del PDF. El cambio conserva las medidas del póster e invalida el PDF anterior. La geometría incluye también una comprobación de posición con recorte; pasan 26 tests unitarios.
 
 Después del último ajuste visual (dimensiones del papel visibles también fuera del select), `npm run check` y `npm run format:check` pasaron de nuevo, junto con los dos tests responsive de Chromium y WebKit. El smoke de desarrollo en `http://localhost:5173/` comprobó selección, tema claro, generación y descarga. Se guardaron un PDF real en `artifacts/cosito-50x98-carta.pdf` y una captura clara en `artifacts/desktop.png`.

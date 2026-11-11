@@ -1,4 +1,5 @@
 import { initial, numeric, type Config } from './configuration';
+import { initialRepeat, type RepeatConfig } from './repeat-configuration';
 import { AdvancedOptions } from '../components/AdvancedOptions';
 import { ResultSummary } from '../components/ResultSummary';
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
@@ -6,24 +7,28 @@ import { useRegisterSW } from 'virtual:pwa-register/preact';
 import { APP_CONFIG } from '../config/app';
 import { PAPERS } from '../config/papers';
 import { calculateLayout } from '../core/tiling';
+import { calculateRepetition } from '../core/repetition';
+import { omitTiles, outsideArtwork } from '../core/mosaic-content';
 import { DEFAULT_IMAGE_ADJUSTMENT, orientedSize, placeImage } from '../core/image-fit';
 import { planRaster } from '../core/raster-plan';
 import { formatNumber, formatSize } from '../core/units';
 import { loadImage, type LoadedImage } from '../image/decode-image';
 import { createPdf } from '../pdf/client';
-import type { PdfOptions, Progress } from '../pdf/types';
+import type { PdfOptions, PdfRequest, Progress } from '../pdf/types';
 import { pdfFilename } from '../utils/filename';
 import { Header } from '../components/Header';
 import { ImageAdjustment } from '../components/ImageAdjustment';
 import { SectionNavigation } from '../components/SectionNavigation';
 import { TypewriterWord } from '../components/TypewriterWord';
 import { PosterPreview } from '../components/PosterPreview';
+import { RepeatPreview, RepeatSummary } from '../components/RepeatPreview';
+import { RepeatSettings } from '../components/RepeatSettings';
 import { PresetDialog } from '../components/PresetDialog';
 import { loadSkin, saveSkin, SKINS, type Skin } from '../theme/skin';
 type AppStatus =
   | { kind: 'empty' | 'ready' }
   | { kind: 'generating'; progress: Progress }
-  | { kind: 'completed'; url: string; filename: string; bytes: number }
+  | { kind: 'completed'; url: string; filename: string; bytes: number; omitted: number[] }
   | { kind: 'error'; message: string };
 type InstallEvent = Event & {
   prompt: () => Promise<void>;
@@ -50,6 +55,8 @@ export function App() {
     return saveSkin(next);
   }
   const [config, setConfig] = useState(initial);
+  const [repeating, setRepeating] = useState(false);
+  const [repeat, setRepeat] = useState(initialRepeat);
   const [image, setImage] = useState<LoadedImage | null>(null);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<AppStatus>({ kind: 'empty' });
@@ -75,6 +82,7 @@ export function App() {
   const paper = PAPERS.find((p) => p.id === config.paperId);
   const paperName = paper?.name || 'Papel personalizado';
   const calculation = useMemo(() => {
+    if (repeating) return { layout: null, error: '' };
     try {
       return {
         layout: calculateLayout({
@@ -91,8 +99,47 @@ export function App() {
     } catch (e) {
       return { layout: null, error: e instanceof Error ? e.message : 'Revisa las medidas.' };
     }
-  }, [config, paper]);
+  }, [config, paper, repeating]);
   const layout = calculation.layout;
+  const repetition = useMemo(() => {
+    if (!repeating) return { layout: null, error: '' };
+    try {
+      return {
+        layout: calculateRepetition({
+          widthMm: numeric(repeat.width) * 10,
+          heightMm: numeric(repeat.height) * 10,
+          paperWidthMm: paper?.widthMm ?? numeric(config.customWidth) * 10,
+          paperHeightMm: paper?.heightMm ?? numeric(config.customHeight) * 10,
+          marginMm: numeric(config.margin),
+          gapMm: numeric(repeat.gap),
+          orientation: config.orientation,
+          allowRotation: repeat.allowRotation,
+          perSheet: repeat.perSheet.trim() ? numeric(repeat.perSheet) : undefined,
+          run: { kind: repeat.run, count: numeric(repeat[repeat.run]) },
+        }),
+        error: '',
+      };
+    } catch (e) {
+      return { layout: null, error: e instanceof Error ? e.message : 'Revisa las medidas.' };
+    }
+  }, [config, paper, repeat, repeating]);
+  const repeatLayout = repetition.layout;
+  const target = layout
+    ? { width: layout.posterWidthMm, height: layout.posterHeightMm }
+    : repeatLayout
+      ? { width: repeatLayout.widthMm, height: repeatLayout.heightMm }
+      : null;
+  const fitted =
+    image &&
+    target &&
+    placeImage(image.width, image.height, target.width, target.height, config.imageAdjustment);
+  const omitted =
+    status.kind === 'completed'
+      ? status.omitted
+      : layout && fitted && config.skipBlank
+        ? outsideArtwork(layout, fitted)
+        : [];
+  const printedLayout = layout && omitTiles(layout, omitted);
   const validateDimensions = showValidation && !!config.width.trim() && !!config.height.trim();
   useEffect(() => {
     let disposed = false;
@@ -139,6 +186,16 @@ export function App() {
     setConfig((c) => ({ ...c, [key]: value }));
     setStatus({ kind: image ? 'ready' : 'empty' });
   }
+  function changeRepeat(patch: Partial<RepeatConfig>) {
+    if (busy) return;
+    setRepeat((value) => ({ ...value, ...patch }));
+    setStatus({ kind: image ? 'ready' : 'empty' });
+  }
+  function changeMode(next: boolean) {
+    if (busy || repeating === next) return;
+    setRepeating(next);
+    setStatus({ kind: image ? 'ready' : 'empty' });
+  }
   async function selectFile(file?: File) {
     if (!file || generating) return;
     const sequence = ++uploadSequence.current;
@@ -166,28 +223,47 @@ export function App() {
     }
   }
   async function generate() {
-    if (!image || !layout || busy || abort.current) return;
+    if (!image || !target || busy || abort.current) return;
+    const options: PdfOptions = { ...config, filename: image.file.name, paperName };
+    const request: PdfRequest | undefined = layout
+      ? { kind: 'mosaic', file: image.file, layout, options, skipBlank: config.skipBlank }
+      : repeatLayout
+        ? {
+            kind: 'repeat',
+            file: image.file,
+            layout: repeatLayout,
+            options,
+            cutGuides: repeat.cutGuides,
+          }
+        : undefined;
+    if (!request) return;
     const controller = new AbortController();
     abort.current = controller;
     const filename = pdfFilename(
       image.file.name,
-      layout.posterWidthMm,
-      layout.posterHeightMm,
+      target.width,
+      target.height,
       config.paperId,
+      repeatLayout?.copies,
     );
-    const options: PdfOptions = { ...config, filename: image.file.name, paperName };
     setStatus({
       kind: 'generating',
-      progress: { done: 0, total: layout.sheetCount, message: 'Preparando tu PDF…' },
+      progress: { done: 0, total: request.layout.sheetCount, message: 'Preparando tu PDF…' },
     });
     try {
-      const bytes = await createPdf(
-        { file: image.file, layout, options },
+      const result = await createPdf(
+        request,
         (progress) => setStatus({ kind: 'generating', progress }),
         controller.signal,
       );
-      const blob = new Blob([bytes as Uint8Array<ArrayBuffer>], { type: 'application/pdf' });
-      setStatus({ kind: 'completed', url: URL.createObjectURL(blob), filename, bytes: blob.size });
+      const blob = new Blob([result.bytes as Uint8Array<ArrayBuffer>], { type: 'application/pdf' });
+      setStatus({
+        kind: 'completed',
+        url: URL.createObjectURL(blob),
+        filename,
+        bytes: blob.size,
+        omitted: result.omitted,
+      });
     } catch (e) {
       if (controller.signal.aborted) {
         setStatus({ kind: 'ready' });
@@ -203,15 +279,8 @@ export function App() {
     }
   }
   let quality = 0;
-  if (image && layout) {
-    const r = placeImage(
-      image.width,
-      image.height,
-      layout.posterWidthMm,
-      layout.posterHeightMm,
-      config.imageAdjustment,
-    );
-    const printSize = orientedSize(r.width, r.height, config.imageAdjustment.rotation);
+  if (image && fitted) {
+    const printSize = orientedSize(fitted.width, fitted.height, config.imageAdjustment.rotation);
     quality = Math.round(
       planRaster(image.width, image.height, printSize.width, printSize.height, config.dpi)
         .effectivePpi,
@@ -223,7 +292,7 @@ export function App() {
         Ir al contenido
       </a>
       <Header skin={skin} changeSkin={changeSkin} />
-      <SectionNavigation />
+      <SectionNavigation repeating={repeating} />
       <main id="main">
         <section class="intro">
           <p class="eyebrow">{brand.eyebrow}</p>
@@ -244,6 +313,17 @@ export function App() {
             {titlesAnimated ? 'Pausar animación de titulares' : 'Reanudar animación de titulares'}
           </button>
         </section>
+        <fieldset class="project-mode" disabled={busy}>
+          <legend>¿Qué quieres imprimir?</legend>
+          <div>
+            <button type="button" aria-pressed={!repeating} onClick={() => changeMode(false)}>
+              Póster en mosaico
+            </button>
+            <button type="button" aria-pressed={repeating} onClick={() => changeMode(true)}>
+              Stickers y tarjetas
+            </button>
+          </div>
+        </fieldset>
         <div class="workspace">
           <div class="configuration">
             <section class="step" id="imagen" tabIndex={-1} aria-labelledby="image-title">
@@ -311,43 +391,51 @@ export function App() {
             <section class="step" id="medidas" tabIndex={-1} aria-labelledby="size-title">
               <div class="section-heading">
                 <span class="step-number">2</span>
-                <h2 id="size-title">¿Qué tamaño necesitas cubrir?</h2>
+                <h2 id="size-title">
+                  {repeating ? 'Tamaño y cantidad de piezas' : '¿Qué tamaño necesitas cubrir?'}
+                </h2>
               </div>
-              <p class="section-note">Las medidas de tu imagen una vez montada.</p>
-              <fieldset class="dimension-row" disabled={busy}>
-                <legend class="sr-only">Tamaño terminado en centímetros</legend>
-                {(['width', 'height'] as const).map((key, i) => (
-                  <label for={key} key={key}>
-                    {i ? 'Alto' : 'Ancho'}
-                    <span class="unit-input">
-                      <input
-                        id={key}
-                        aria-label={i ? 'Alto' : 'Ancho'}
-                        type="text"
-                        inputMode="decimal"
-                        value={config[key]}
-                        onInput={(e) => change(key, e.currentTarget.value)}
-                        aria-invalid={!layout && validateDimensions}
-                        aria-describedby={!layout ? 'config-error' : undefined}
-                      />
-                      <span>cm</span>
+              {repeating ? (
+                <RepeatSettings value={repeat} change={changeRepeat} busy={busy} />
+              ) : (
+                <>
+                  <p class="section-note">Las medidas de tu imagen una vez montada.</p>
+                  <fieldset class="dimension-row" disabled={busy}>
+                    <legend class="sr-only">Tamaño terminado en centímetros</legend>
+                    {(['width', 'height'] as const).map((key, i) => (
+                      <label for={key} key={key}>
+                        {i ? 'Alto' : 'Ancho'}
+                        <span class="unit-input">
+                          <input
+                            id={key}
+                            aria-label={i ? 'Alto' : 'Ancho'}
+                            type="text"
+                            inputMode="decimal"
+                            value={config[key]}
+                            onInput={(e) => change(key, e.currentTarget.value)}
+                            aria-invalid={!layout && validateDimensions}
+                            aria-describedby={!layout ? 'config-error' : undefined}
+                          />
+                          <span>cm</span>
+                        </span>
+                      </label>
+                    ))}
+                    <span class="times" aria-hidden="true">
+                      ×
                     </span>
-                  </label>
-                ))}
-                <span class="times" aria-hidden="true">
-                  ×
-                </span>
-              </fieldset>
-              <button
-                class="text-button"
-                disabled={busy}
-                onClick={(event) => {
-                  event.currentTarget.focus();
-                  setPresetsOpen(true);
-                }}
-              >
-                Usar un tamaño frecuente <span aria-hidden="true">↗</span>
-              </button>
+                  </fieldset>
+                  <button
+                    class="text-button"
+                    disabled={busy}
+                    onClick={(event) => {
+                      event.currentTarget.focus();
+                      setPresetsOpen(true);
+                    }}
+                  >
+                    Usar un tamaño frecuente <span aria-hidden="true">↗</span>
+                  </button>
+                </>
+              )}
             </section>
             <section class="step" id="papel" tabIndex={-1} aria-labelledby="paper-title">
               <div class="section-heading">
@@ -404,27 +492,48 @@ export function App() {
                     <br />
                   </>
                 )}
-                Elegimos la orientación que necesita menos hojas.
+                {repeating
+                  ? 'Puedes usar A4 adhesivo del mismo tamaño que el A4 normal.'
+                  : 'Elegimos la orientación que necesita menos hojas.'}
               </p>
             </section>
           </div>
           <section class="result" id="resultado" tabIndex={-1} aria-labelledby="result-title">
-            <ResultSummary
-              hasImage={!!image}
-              layout={layout}
-              paperName={paperName}
-              showValidation={validateDimensions}
-              error={calculation.error}
-            />
-            {image && layout && (
+            {repeating ? (
+              <RepeatSummary layout={repeatLayout} error={repetition.error} paperName={paperName} />
+            ) : (
+              <ResultSummary
+                hasImage={!!image}
+                layout={printedLayout}
+                paperName={paperName}
+                showValidation={validateDimensions}
+                error={calculation.error}
+                omitted={omitted.length}
+              />
+            )}
+            {image && target && (
               <ImageAdjustment
                 value={config.imageAdjustment}
                 change={(value) => change('imageAdjustment', value)}
                 busy={busy}
+                repeating={repeating}
               />
             )}
-            {layout && (
-              <PosterPreview image={image} layout={layout} adjustment={config.imageAdjustment} />
+            {layout && printedLayout && (
+              <PosterPreview
+                image={image}
+                layout={layout}
+                printed={printedLayout}
+                adjustment={config.imageAdjustment}
+              />
+            )}
+            {repeatLayout && (
+              <RepeatPreview
+                image={image}
+                layout={repeatLayout}
+                adjustment={config.imageAdjustment}
+                cutGuides={repeat.cutGuides}
+              />
             )}
             <div class="pdf-action">
               {status.kind === 'generating' ? (
@@ -456,7 +565,7 @@ export function App() {
                 <>
                   <button
                     class="primary create"
-                    disabled={!image || !layout || busy}
+                    disabled={!image || !target || busy}
                     onClick={generate}
                   >
                     Crear PDF <span aria-hidden="true">↓</span>
@@ -464,9 +573,13 @@ export function App() {
                   <p class="action-note">
                     {!image
                       ? 'Agrega una imagen para crear tu PDF.'
-                      : layout
-                        ? 'Listo para imprimir, recortar y unir.'
-                        : 'Indica el ancho y el alto finales para crear tu PDF.'}
+                      : target
+                        ? repeating
+                          ? 'Listo para imprimir y recortar.'
+                          : 'Listo para imprimir, recortar y unir.'
+                        : repeating
+                          ? 'Revisa las medidas y la cantidad de piezas.'
+                          : 'Indica el ancho y el alto finales para crear tu PDF.'}
                   </p>
                 </>
               )}
@@ -482,25 +595,42 @@ export function App() {
             change={change}
             busy={busy}
             quality={quality}
-            layout={layout}
+            layout={printedLayout ?? repeatLayout}
+            repeating={repeating}
           />
         </div>
         <aside class="assembly-help" id="montaje" tabIndex={-1} aria-labelledby="assembly-title">
-          <h2 id="assembly-title" aria-label="Del cosito a algo grande.">
-            Del cosito a algo <TypewriterWord text="grande" enabled={titlesAnimated} />.
+          <h2 id="assembly-title" aria-label={repeating ? undefined : 'Del cosito a algo grande.'}>
+            {repeating ? (
+              'Imprime tus piezas a tamaño real'
+            ) : (
+              <>
+                Del cosito a algo <TypewriterWord text="grande" enabled={titlesAnimated} />.
+              </>
+            )}
           </h2>
           <ol>
             <li>
               <strong>Imprime al 100 %.</strong> Elige Tamaño real y desactiva Ajustar a página.
             </li>
-            <li>
-              <strong>Recorta y ordena.</strong> Sigue los números. Desde la segunda columna y fila,
-              recorta también la franja repetida izquierda y superior.
-            </li>
-            <li>
-              <strong>Alinea y une.</strong> Junta los bordes recortados y pega por detrás. Conserva
-              el contenido de los bordes externos.
-            </li>
+            {repeating ? (
+              <li>
+                <strong>Elige el papel.</strong> Usa el mismo formato que seleccionaste en Cosito.
+                Si es adhesivo, elige el tipo de papel adecuado en la impresora.
+              </li>
+            ) : (
+              <>
+                <li>
+                  <strong>Recorta y ordena.</strong> Sigue los números. Desde la segunda columna y
+                  fila, recorta también la franja repetida izquierda y superior cuando haya una hoja
+                  vecina impresa.
+                </li>
+                <li>
+                  <strong>Alinea y une.</strong> Junta los bordes recortados y pega por detrás.
+                  Conserva el contenido de los bordes externos.
+                </li>
+              </>
+            )}
           </ol>
         </aside>
         {(offlineReady || offlineCached || offlineMessage) && (

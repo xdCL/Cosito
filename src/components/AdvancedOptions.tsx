@@ -8,12 +8,14 @@ export function AdvancedOptions({
   busy,
   quality,
   layout,
+  repeating,
 }: {
   config: Config;
   change: ChangeConfig;
   busy: boolean;
   quality: number;
-  layout: Layout | null;
+  layout: Pick<Layout, 'sheetCount'> | null;
+  repeating: boolean;
 }) {
   return (
     <details class="advanced" id="opciones">
@@ -29,7 +31,7 @@ export function AdvancedOptions({
               value={config.orientation}
               onChange={(e) => change('orientation', e.currentTarget.value as Orientation)}
             >
-              <option value="auto">Usar menos hojas</option>
+              <option value="auto">{repeating ? 'Quepan más piezas' : 'Usar menos hojas'}</option>
               <option value="portrait">Vertical</option>
               <option value="landscape">Horizontal</option>
             </select>
@@ -44,22 +46,24 @@ export function AdvancedOptions({
               onInput={(e) => change('margin', e.currentTarget.value)}
             />
           </label>
-          <label>
-            Solape: contenido repetido (mm)
-            <input
-              type="number"
-              min="0"
-              step="0.5"
-              value={config.overlap}
-              list="overlap-values"
-              onInput={(e) => change('overlap', e.currentTarget.value)}
-            />
-            <datalist id="overlap-values">
-              {[0, 3, 5, 10].map((n) => (
-                <option key={n} value={n} />
-              ))}
-            </datalist>
-          </label>
+          {!repeating && (
+            <label>
+              Solape: contenido repetido (mm)
+              <input
+                type="number"
+                min="0"
+                step="0.5"
+                value={config.overlap}
+                list="overlap-values"
+                onInput={(e) => change('overlap', e.currentTarget.value)}
+              />
+              <datalist id="overlap-values">
+                {[0, 3, 5, 10].map((n) => (
+                  <option key={n} value={n} />
+                ))}
+              </datalist>
+            </label>
+          )}
           <label>
             Calidad
             <select
@@ -91,32 +95,38 @@ export function AdvancedOptions({
             </p>
           )}
         <p class="section-note">
-          El solape ayuda a unir las hojas y conserva el tamaño final. La resolución se limita en
-          equipos modestos; subir la calidad no agrega detalles a la imagen original.
+          {!repeating && 'El solape ayuda a unir las hojas y conserva el tamaño final. '}
+          La resolución se limita en equipos modestos; subir la calidad no agrega detalles a la
+          imagen original.
         </p>
         {numeric(config.margin) < 3 && (
           <p class="warning">
-            Con menos de 3 mm, algunas marcas y referencias se omiten para proteger la imagen. Con
-            margen 0, tu impresora debe admitir impresión sin bordes.
+            {!repeating &&
+              'Con menos de 3 mm, algunas marcas y referencias se omiten para proteger la imagen. '}
+            Con margen 0, tu impresora debe admitir impresión sin bordes.
           </p>
         )}
-        {(['cropMarks', 'alignmentMarks', 'guide', 'calibration'] as const).map((key, i) => (
-          <label class="check-label" key={key}>
-            <input
-              type="checkbox"
-              checked={config[key]}
-              onChange={(e) => change(key, e.currentTarget.checked)}
-            />
-            {
-              [
-                'Marcas de corte',
-                'Marcas de alineación',
-                'Incluir guía de montaje en PDF (+1 hoja)',
-                'Incluir página de calibración (+1 hoja)',
-              ][i]
-            }
-          </label>
-        ))}
+        {!repeating &&
+          (['skipBlank', 'cropMarks', 'alignmentMarks', 'guide', 'calibration'] as const).map(
+            (key, i) => (
+              <label class="check-label" key={key}>
+                <input
+                  type="checkbox"
+                  checked={config[key]}
+                  onChange={(e) => change(key, e.currentTarget.checked)}
+                />
+                {
+                  [
+                    'Omitir hojas sin contenido visible',
+                    'Marcas de corte',
+                    'Marcas de alineación',
+                    'Incluir guía de montaje en PDF (+1 hoja)',
+                    'Incluir página de calibración (+1 hoja)',
+                  ][i]
+                }
+              </label>
+            ),
+          )}
       </fieldset>
     </details>
   );

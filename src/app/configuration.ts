@@ -15,6 +15,7 @@ export type Config = {
   alignmentMarks: boolean;
   guide: boolean;
   calibration: boolean;
+  skipBlank: boolean;
 };
 export const initial: Config = {
   width: '',
@@ -31,6 +32,7 @@ export const initial: Config = {
   alignmentMarks: true,
   guide: false,
   calibration: false,
+  skipBlank: true,
 };
 export const numeric = (text: string) => (text.trim() ? Number(text.replace(',', '.')) : NaN);
 export type ChangeConfig = <K extends keyof Config>(key: K, value: Config[K]) => void;

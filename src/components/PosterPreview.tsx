@@ -7,10 +7,12 @@ export function PosterPreview({
   image,
   layout,
   adjustment,
+  printed,
 }: {
   image: LoadedImage | null;
   layout: Layout;
   adjustment: ImageAdjustment;
+  printed: Layout;
 }) {
   const ref = useRef<HTMLCanvasElement>(null);
   const [thumbnail, setThumbnail] = useState<{ source: HTMLImageElement; url: string }>();
@@ -18,6 +20,7 @@ export function PosterPreview({
   const scale = LIMITS.maxPreviewSide / Math.max(posterWidthMm, posterHeightMm);
   const width = Math.max(1, Math.round(posterWidthMm * scale));
   const height = Math.max(1, Math.round(posterHeightMm * scale));
+  const printedTiles = new Map(printed.tiles.map((tile) => [tile.label, tile]));
   useEffect(() => {
     if (!image) return;
     const source = new Image();
@@ -60,9 +63,10 @@ export function PosterPreview({
         <div class="tile-overlay" aria-hidden="true">
           {layout.tiles.map((tile) => {
             const r = tile.posterRectMm;
+            const printedTile = printedTiles.get(tile.label);
             return (
               <div
-                class="preview-tile"
+                class={`preview-tile${printedTile ? '' : ' omitted'}`}
                 key={tile.index}
                 style={{
                   left: `${(r.x / layout.posterWidthMm) * 100}%`,
@@ -71,20 +75,20 @@ export function PosterPreview({
                   height: `${(r.height / layout.posterHeightMm) * 100}%`,
                 }}
               >
-                {tile.overlap.left > 0 && (
+                {printedTile && printedTile.overlap.left > 0 && (
                   <i
                     class="overlap-band vertical"
                     style={{ width: `${(tile.overlap.left / r.width) * 100}%` }}
                   />
                 )}
-                {tile.overlap.top > 0 && (
+                {printedTile && printedTile.overlap.top > 0 && (
                   <i
                     class="overlap-band horizontal"
                     style={{ height: `${(tile.overlap.top / r.height) * 100}%` }}
                   />
                 )}
                 <span>
-                  {tile.index + 1}
+                  {printedTile ? printedTile.index + 1 : '–'}
                   <small>{tile.label}</small>
                 </span>
               </div>
@@ -93,18 +97,21 @@ export function PosterPreview({
         </div>
         {!image && <div class="preview-placeholder">Tu imagen aparecerá aquí</div>}
       </div>
-      <figcaption>Guía de montaje · Las franjas muestran el contenido repetido.</figcaption>
+      <figcaption>
+        Guía de montaje · Las franjas muestran el contenido repetido.
+        {printed.sheetCount < layout.sheetCount ? ' Las casillas con raya no se imprimen.' : ''}
+      </figcaption>
       <details class="assembly-list">
         <summary>Ver orden de las hojas</summary>
         <ol>
-          {layout.tiles.map((tile) => (
+          {printed.tiles.map((tile) => (
             <li key={tile.index}>
               Hoja {tile.index + 1} · {tile.label}
               {tile.neighbours.right !== undefined
-                ? ` → ${layout.tiles[tile.neighbours.right].label}`
+                ? ` → ${printed.tiles[tile.neighbours.right].label}`
                 : ''}
               {tile.neighbours.bottom !== undefined
-                ? ` ↓ ${layout.tiles[tile.neighbours.bottom].label}`
+                ? ` ↓ ${printed.tiles[tile.neighbours.bottom].label}`
                 : ''}
             </li>
           ))}

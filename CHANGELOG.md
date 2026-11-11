@@ -1,5 +1,12 @@
 # Changelog
 
+## Actualización — 2026-11-10
+
+- Mosaicos que omiten por defecto hojas sin imagen, blancas o transparentes, conservando coordenadas de montaje.
+- Modalidad de repeticiones con tamaños físicos, separación y margen de papel ajustables.
+- Tiradas por hojas completas o cantidad exacta, límite de copias por hoja y última hoja parcial.
+- Formatos editables para stickers, tarjetas y credenciales; vista previa y líneas de corte opcionales.
+
 ## 0.1.0 — 2026-10-03
 
 - Motor físico en milímetros, orientación automática y solapes que preservan el tamaño.
