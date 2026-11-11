@@ -16,22 +16,6 @@ a {
 h1,
 h2,
 h3,
-.home-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 44px;
-  padding: 6px 12px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  color: var(--color-text);
-  background: var(--color-surface);
-  font-size: 0.78rem;
-  text-decoration: none;
-}
-.home-link:hover {
-  background: var(--color-accent-soft);
-}
 .wordmark {
   font-family: var(--font-heading);
   font-weight: 600;
@@ -161,6 +145,22 @@ footer {
   display: flex;
   align-items: baseline;
   gap: 4px;
+}
+.home-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 6px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  background: var(--color-surface);
+  font-size: 0.78rem;
+  text-decoration: none;
+}
+.home-link:hover {
+  background: var(--color-accent-soft);
 }
 .logo-dot {
   width: 10px;
