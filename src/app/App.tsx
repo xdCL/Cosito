@@ -692,6 +692,21 @@ export function App() {
                   <button class="text-button" onClick={generate}>
                     Crear de nuevo
                   </button>
+                  {!repeating && (
+                    <>
+                      <button
+                        type="button"
+                        class="primary create"
+                        onClick={() => fileInput.current?.click()}
+                      >
+                        + Crear otro mosaico con otra foto
+                      </button>
+                      <p class="action-note">
+                        Se conservarán las medidas y opciones de impresión. Descarga el PDF actual
+                        antes de elegir otra imagen.
+                      </p>
+                    </>
+                  )}
                 </div>
               ) : (
                 <>
