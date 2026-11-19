@@ -173,3 +173,48 @@ test('JPG y WEBP reales', async ({ page }) => {
     await expect(page.getByRole('link', { name: 'Descargar PDF' })).toBeVisible();
   }
 });
+
+test('permite crear otro mosaico con otra foto sin reiniciar ni perder las medidas', async ({
+  page,
+}) => {
+  await page.goto('./');
+  await page.getByLabel('Seleccionar archivo de imagen').setInputFiles(fixture);
+  await page.getByLabel('Ancho', { exact: true }).fill('29');
+  await page.getByLabel('Alto', { exact: true }).fill('35');
+  await page.getByLabel('Papel', { exact: true }).selectOption('a4');
+  await page.getByRole('button', { name: 'Crear PDF' }).click();
+  await expect(page.getByRole('link', { name: 'Descargar PDF' })).toBeVisible();
+  const another = page.getByRole('button', { name: 'Crear otro mosaico con otra foto' });
+  await expect(another).toBeVisible();
+
+  // Canceling the picker must not discard the existing PDF.
+  const pickerCancelled = page.waitForEvent('filechooser');
+  await another.click();
+  await (await pickerCancelled).setFiles([]);
+  await expect(page.getByRole('link', { name: 'Descargar PDF' })).toBeVisible();
+
+  const picker = page.waitForEvent('filechooser');
+  await another.click();
+  await (
+    await picker
+  ).setFiles({
+    name: 'segunda-foto.webp',
+    mimeType: 'image/webp',
+    buffer: await readFile('e2e/fixtures/grid.webp'),
+  });
+  await expect(page.locator('.image-info strong')).toHaveText('segunda-foto.webp');
+  await expect(page.getByLabel('Ancho', { exact: true })).toHaveValue('29');
+  await expect(page.getByLabel('Alto', { exact: true })).toHaveValue('35');
+  await expect(page.getByLabel('Papel', { exact: true })).toHaveValue('a4');
+  await expect(page.getByRole('link', { name: 'Descargar PDF' })).toBeHidden();
+  await expect(page.getByRole('button', { name: 'Crear PDF' })).toBeEnabled();
+
+  await page.getByRole('button', { name: 'Crear PDF' }).click();
+  const downloadPromise = page.waitForEvent('download');
+  await page.getByRole('link', { name: 'Descargar PDF' }).click();
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toBe('segunda-foto-29x35cm-a4-cosito.pdf');
+  const pdf = await PDFDocument.load(await readFile((await download.path())!));
+  expect(pdf.getPageCount()).toBe(4);
+  await expect(another).toBeVisible();
+});
