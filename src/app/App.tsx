@@ -91,7 +91,8 @@ export function App() {
       return;
     }
     let cancelled = false;
-    void navigator.serviceWorker.getRegistration(import.meta.env.BASE_URL)
+    void navigator.serviceWorker
+      .getRegistration(import.meta.env.BASE_URL)
       .then((registration) => {
         if (!cancelled) {
           // A fresh install isn't an update: require an existing controller and a waiting worker.
