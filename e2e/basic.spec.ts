@@ -174,7 +174,9 @@ test('JPG y WEBP reales', async ({ page }) => {
   }
 });
 
-test('permite crear otro mosaico con otra foto sin reiniciar ni perder las medidas', async ({ page }) => {
+test('permite crear otro mosaico con otra foto sin reiniciar ni perder las medidas', async ({
+  page,
+}) => {
   await page.goto('./');
   await page.getByLabel('Seleccionar archivo de imagen').setInputFiles(fixture);
   await page.getByLabel('Ancho', { exact: true }).fill('29');
