@@ -97,7 +97,7 @@ export function UpdatePrompt({
         </p>
       </dialog>
       {available && deferred && (
-        <aside class="update-reminder" role="status">
+        <aside class="update-reminder" aria-label="Actualización pendiente">
           <span>Hay una actualización de {toolName} pendiente.</span>
           <button
             type="button"
