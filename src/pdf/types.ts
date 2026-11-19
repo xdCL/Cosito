@@ -14,6 +14,6 @@ export type PdfOptions = {
 export type Progress = { done: number; total: number; message: string };
 export type PdfRequest = { file: File; options: PdfOptions } & (
   | { kind: 'mosaic'; layout: Layout; skipBlank: boolean }
-  | { kind: 'repeat'; layout: RepeatLayout; cutGuides: boolean }
+  | { kind: 'repeat'; layout: RepeatLayout; cutGuides: boolean; pieces?: { file: File; adjustment: ImageAdjustment }[] }
 );
 export type PdfResult = { bytes: Uint8Array; omitted: number[] };
