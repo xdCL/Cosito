@@ -19,15 +19,24 @@ export function RepeatSummary({
   return (
     <div class="result-summary" aria-live="polite">
       <p class="eyebrow">ASÍ QUEDARÁ TU TIRADA</p>
-      <h2 id="result-title">{distinct ? 'Tus hojas de credenciales' : 'Tus hojas de repeticiones'}</h2>
+      <h2 id="result-title">
+        {distinct ? 'Tus hojas de credenciales' : 'Tus hojas de repeticiones'}
+      </h2>
       {layout ? (
         <>
           <p class="sheet-count">
             <strong>{layout.sheetCount}</strong> {layout.sheetCount === 1 ? 'hoja' : 'hojas'}
           </p>
           <p class="repeat-count">
-            {layout.copies} {distinct ? (layout.copies === 1 ? 'imagen' : 'imágenes') : (layout.copies === 1 ? 'copia' : 'copias')} · {layout.slots.length} por
-            hoja
+            {layout.copies}{' '}
+            {distinct
+              ? layout.copies === 1
+                ? 'imagen'
+                : 'imágenes'
+              : layout.copies === 1
+                ? 'copia'
+                : 'copias'}{' '}
+            · {layout.slots.length} por hoja
             {layout.sheetCount > 1 && layout.lastSheetCount < layout.perSheet
               ? ` · ${layout.lastSheetCount} en la última`
               : ''}
@@ -93,13 +102,15 @@ export function RepeatPreview({
           const piece = pieces?.[startIndex + index];
           const artwork = piece?.image ?? image;
           const adjustmentForPiece = piece?.adjustment ?? adjustment;
-          const fitted = artwork && placeImage(
-            artwork.width,
-            artwork.height,
-            layout.widthMm,
-            layout.heightMm,
-            adjustmentForPiece,
-          );
+          const fitted =
+            artwork &&
+            placeImage(
+              artwork.width,
+              artwork.height,
+              layout.widthMm,
+              layout.heightMm,
+              adjustmentForPiece,
+            );
           const local = { ...slot, x: 0, y: 0 };
           const copy = fitted && placeCopy(layout, local, fitted, adjustmentForPiece.rotation);
           return (

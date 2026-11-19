@@ -14,7 +14,13 @@ import { calculateLayout } from '../src/core/tiling';
 import { DEFAULT_IMAGE_ADJUSTMENT, placeImage } from '../src/core/image-fit';
 import { calculateRepetition } from '../src/core/repetition';
 import { mmToPt, ptToMm } from '../src/core/units';
-import { renderCalibration, renderGuide, renderTile, renderCopies, renderMixedCopies } from '../src/pdf/render-page';
+import {
+  renderCalibration,
+  renderGuide,
+  renderTile,
+  renderCopies,
+  renderMixedCopies,
+} from '../src/pdf/render-page';
 import { fixtureColor, fixturePng } from '../scripts/generate-fixtures';
 const base = {
   posterWidthMm: 500,
@@ -86,9 +92,16 @@ describe('PDF físico e imagen compartida', () => {
   });
   it('coloca imágenes distintas en hojas sucesivas sin duplicar los espacios vacíos', async () => {
     const layout = calculateRepetition({
-      widthMm: 85.6, heightMm: 53.98, paperWidthMm: 210, paperHeightMm: 297,
-      marginMm: 5, gapMm: 3, orientation: 'portrait', allowRotation: true,
-      perSheet: 2, run: { kind: 'copies', count: 3 },
+      widthMm: 85.6,
+      heightMm: 53.98,
+      paperWidthMm: 210,
+      paperHeightMm: 297,
+      marginMm: 5,
+      gapMm: 3,
+      orientation: 'portrait',
+      allowRotation: true,
+      perSheet: 2,
+      run: { kind: 'copies', count: 3 },
     });
     const doc = await PDFDocument.create();
     const red = createCanvas(50, 50);
@@ -100,10 +113,15 @@ describe('PDF físico e imagen compartida', () => {
     const redImage = await doc.embedPng(red.toBuffer('image/png'));
     const blueImage = await doc.embedPng(blue.toBuffer('image/png'));
     const fit = placeImage(50, 50, layout.widthMm, layout.heightMm, DEFAULT_IMAGE_ADJUSTMENT);
-    renderMixedCopies(doc, layout, [
-      { image: redImage, fitted: fit, rotation: 0 },
-      { image: blueImage, fitted: fit, rotation: 0 },
-    ], false);
+    renderMixedCopies(
+      doc,
+      layout,
+      [
+        { image: redImage, fitted: fit, rotation: 0 },
+        { image: blueImage, fitted: fit, rotation: 0 },
+      ],
+      false,
+    );
     renderMixedCopies(doc, layout, [{ image: blueImage, fitted: fit, rotation: 0 }], false);
     const pdf = await PDFDocument.load(await doc.save());
     expect(pdf.getPageCount()).toBe(2);

@@ -123,7 +123,9 @@ export function App() {
           orientation: config.orientation,
           allowRotation: repeat.allowRotation,
           perSheet: repeat.perSheet.trim() ? numeric(repeat.perSheet) : undefined,
-          run: mixed ? { kind: 'copies', count: Math.max(1, pieces.length) } : { kind: repeat.run, count: numeric(repeat[repeat.run]) },
+          run: mixed
+            ? { kind: 'copies', count: Math.max(1, pieces.length) }
+            : { kind: repeat.run, count: numeric(repeat[repeat.run]) },
         }),
         error: '',
       };
@@ -163,9 +165,12 @@ export function App() {
     const timer = window.setTimeout(() => setShowValidation(true), 600);
     return () => window.clearTimeout(timer);
   }, [config]);
-  useEffect(() => () => {
-    for (const piece of piecesRef.current) URL.revokeObjectURL(piece.image.previewUrl);
-  }, []);
+  useEffect(
+    () => () => {
+      for (const piece of piecesRef.current) URL.revokeObjectURL(piece.image.previewUrl);
+    },
+    [],
+  );
   useEffect(() => {
     const url = image?.previewUrl;
     return () => {
@@ -208,7 +213,8 @@ export function App() {
     setStatus({ kind: hasArtwork ? 'ready' : 'empty' });
   }
   function reorderPiece(from: number, to: number) {
-    if (busy || from === to || from < 0 || to < 0 || from >= pieces.length || to >= pieces.length) return;
+    if (busy || from === to || from < 0 || to < 0 || from >= pieces.length || to >= pieces.length)
+      return;
     setPieces((current) => {
       const next = current.slice();
       const [piece] = next.splice(from, 1);
@@ -225,17 +231,20 @@ export function App() {
   }
   function adjustPiece(index: number, patch: Partial<MultiPiece['adjustment']>) {
     if (busy) return;
-    setPieces((current) => current.map((piece, i) => i === index
-      ? { ...piece, adjustment: { ...piece.adjustment, ...patch } }
-      : piece));
+    setPieces((current) =>
+      current.map((piece, i) =>
+        i === index ? { ...piece, adjustment: { ...piece.adjustment, ...patch } } : piece,
+      ),
+    );
     setStatus({ kind: 'ready' });
   }
   async function selectPieceFiles(files: File[], replaceIndex?: number) {
     if (!files.length || busy) return;
     const replacing = replaceIndex !== undefined;
     const count = pieces.length + files.length - Number(replacing);
-    const bytes = pieces.reduce((sum, piece, i) => sum + (i === replaceIndex ? 0 : piece.image.file.size), 0)
-      + files.reduce((sum, file) => sum + file.size, 0);
+    const bytes =
+      pieces.reduce((sum, piece, i) => sum + (i === replaceIndex ? 0 : piece.image.file.size), 0) +
+      files.reduce((sum, file) => sum + file.size, 0);
     if (count > MAX_DISTINCT_PIECES || bytes > MAX_DISTINCT_BYTES) {
       setStatus({ kind: 'error', message: 'Se admiten hasta 100 imágenes y 250 MB en total.' });
       return;
@@ -256,15 +265,20 @@ export function App() {
       }));
       if (replacing && pieces[replaceIndex]) {
         URL.revokeObjectURL(pieces[replaceIndex].image.previewUrl);
-        setPieces((current) => current.map((piece, i) => i === replaceIndex
-          ? { ...additions[0], adjustment: piece.adjustment }
-          : piece));
+        setPieces((current) =>
+          current.map((piece, i) =>
+            i === replaceIndex ? { ...additions[0], adjustment: piece.adjustment } : piece,
+          ),
+        );
       } else setPieces((current) => [...current, ...additions]);
       setStatus({ kind: 'ready' });
     } catch (e) {
       loaded.forEach((entry) => URL.revokeObjectURL(entry.previewUrl));
       if (sequence === uploadSequence.current)
-        setStatus({ kind: 'error', message: e instanceof Error ? e.message : 'No pudimos abrir estas imágenes.' });
+        setStatus({
+          kind: 'error',
+          message: e instanceof Error ? e.message : 'No pudimos abrir estas imágenes.',
+        });
     } finally {
       if (sequence === uploadSequence.current) setLoading(false);
     }
@@ -306,7 +320,9 @@ export function App() {
             kind: 'repeat',
             file: source.file,
             layout: repeatLayout,
-            pieces: mixed ? pieces.map((piece) => ({ file: piece.image.file, adjustment: piece.adjustment })) : undefined,
+            pieces: mixed
+              ? pieces.map((piece) => ({ file: piece.image.file, adjustment: piece.adjustment }))
+              : undefined,
             options,
             cutGuides: repeat.cutGuides,
           }
@@ -410,13 +426,21 @@ export function App() {
                 <fieldset class="repeat-image-mode" disabled={busy}>
                   <legend>¿Cómo quieres distribuir las imágenes?</legend>
                   <label>
-                    <input type="radio" name="repeat-image-mode" checked={repeat.imageMode === 'single'}
-                      onChange={() => changeRepeat({ imageMode: 'single' })} />
+                    <input
+                      type="radio"
+                      name="repeat-image-mode"
+                      checked={repeat.imageMode === 'single'}
+                      onChange={() => changeRepeat({ imageMode: 'single' })}
+                    />
                     Repetir una imagen
                   </label>
                   <label>
-                    <input type="radio" name="repeat-image-mode" checked={repeat.imageMode === 'multiple'}
-                      onChange={() => changeRepeat({ imageMode: 'multiple' })} />
+                    <input
+                      type="radio"
+                      name="repeat-image-mode"
+                      checked={repeat.imageMode === 'multiple'}
+                      onChange={() => changeRepeat({ imageMode: 'multiple' })}
+                    />
                     Imágenes diferentes por credencial
                   </label>
                 </fieldset>
@@ -432,61 +456,61 @@ export function App() {
                   adjust={adjustPiece}
                 />
               ) : (
-              <div
-                class={`drop-zone ${dragging ? 'dragging' : ''} ${image ? 'has-image' : ''}`}
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  if (!busy) setDragging(true);
-                }}
-                onDragLeave={() => setDragging(false)}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  setDragging(false);
-                  if (!busy) void selectFile(e.dataTransfer?.files[0]);
-                }}
-              >
-                {image ? (
-                  <div class="image-info">
-                    <img src={image.previewUrl} alt="Miniatura de tu imagen" />
-                    <div>
-                      <strong>{image.file.name}</strong>
-                      <span>
-                        {image.width} × {image.height} píxeles
-                      </span>
-                      <button
-                        type="button"
-                        disabled={busy}
-                        onClick={() => fileInput.current?.click()}
-                      >
-                        Cambiar imagen
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <div class="upload-symbol" aria-hidden="true">
-                      ↥
-                    </div>
-                    <button disabled={busy} onClick={() => fileInput.current?.click()}>
-                      + Seleccionar imagen
-                    </button>
-                    <p>o arrástrala hasta aquí</p>
-                    <small>JPG, PNG o WEBP · hasta 30 MB</small>
-                  </>
-                )}
-                <input
-                  class="sr-only"
-                  ref={fileInput}
-                  aria-label="Seleccionar archivo de imagen"
-                  type="file"
-                  disabled={busy}
-                  accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
-                  onChange={(e) => {
-                    void selectFile(e.currentTarget.files?.[0]);
-                    e.currentTarget.value = '';
+                <div
+                  class={`drop-zone ${dragging ? 'dragging' : ''} ${image ? 'has-image' : ''}`}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    if (!busy) setDragging(true);
                   }}
-                />
-              </div>
+                  onDragLeave={() => setDragging(false)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setDragging(false);
+                    if (!busy) void selectFile(e.dataTransfer?.files[0]);
+                  }}
+                >
+                  {image ? (
+                    <div class="image-info">
+                      <img src={image.previewUrl} alt="Miniatura de tu imagen" />
+                      <div>
+                        <strong>{image.file.name}</strong>
+                        <span>
+                          {image.width} × {image.height} píxeles
+                        </span>
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() => fileInput.current?.click()}
+                        >
+                          Cambiar imagen
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div class="upload-symbol" aria-hidden="true">
+                        ↥
+                      </div>
+                      <button disabled={busy} onClick={() => fileInput.current?.click()}>
+                        + Seleccionar imagen
+                      </button>
+                      <p>o arrástrala hasta aquí</p>
+                      <small>JPG, PNG o WEBP · hasta 30 MB</small>
+                    </>
+                  )}
+                  <input
+                    class="sr-only"
+                    ref={fileInput}
+                    aria-label="Seleccionar archivo de imagen"
+                    type="file"
+                    disabled={busy}
+                    accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
+                    onChange={(e) => {
+                      void selectFile(e.currentTarget.files?.[0]);
+                      e.currentTarget.value = '';
+                    }}
+                  />
+                </div>
               )}
               {loading && <p role="status">Abriendo tus imágenes…</p>}
             </section>
@@ -602,7 +626,12 @@ export function App() {
           </div>
           <section class="result" id="resultado" tabIndex={-1} aria-labelledby="result-title">
             {repeating ? (
-              <RepeatSummary layout={repeatLayout} error={repetition.error} paperName={paperName} distinct={mixed} />
+              <RepeatSummary
+                layout={repeatLayout}
+                error={repetition.error}
+                paperName={paperName}
+                distinct={mixed}
+              />
             ) : (
               <ResultSummary
                 hasImage={!!image}
@@ -675,7 +704,9 @@ export function App() {
                   </button>
                   <p class="action-note">
                     {!hasArtwork
-                      ? mixed ? 'Agrega las imágenes de las credenciales para crear tu PDF.' : 'Agrega una imagen para crear tu PDF.'
+                      ? mixed
+                        ? 'Agrega las imágenes de las credenciales para crear tu PDF.'
+                        : 'Agrega una imagen para crear tu PDF.'
                       : target
                         ? repeating
                           ? 'Listo para imprimir y recortar.'

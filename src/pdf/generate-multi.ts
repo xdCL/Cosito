@@ -24,16 +24,32 @@ export async function generateMultiImagePdf(
   doc.setCreator(APP_CONFIG.name + ' · ' + APP_CONFIG.developer);
   doc.setTitle(APP_CONFIG.name + ' — credenciales diferentes');
   const total = pieces.length + layout.sheetCount;
-  const prepared: { image: PDFImage; fitted: ReturnType<typeof placeImage>; rotation: ImageRotation }[] = [];
+  const prepared: {
+    image: PDFImage;
+    fitted: ReturnType<typeof placeImage>;
+    rotation: ImageRotation;
+  }[] = [];
   for (let i = 0; i < pieces.length; i++) {
     check();
     const { file, adjustment } = pieces[i];
     const metadata = await validateImage(file);
     const decoded = await decodeImage(file);
     let blob: Blob;
-    const fitted = placeImage(decoded.width, decoded.height, layout.widthMm, layout.heightMm, adjustment);
+    const fitted = placeImage(
+      decoded.width,
+      decoded.height,
+      layout.widthMm,
+      layout.heightMm,
+      adjustment,
+    );
     const oriented = orientedSize(fitted.width, fitted.height, adjustment.rotation);
-    const raster = planRaster(decoded.width, decoded.height, oriented.width, oriented.height, options.dpi);
+    const raster = planRaster(
+      decoded.width,
+      decoded.height,
+      oriented.width,
+      oriented.height,
+      options.dpi,
+    );
     try {
       blob = await rasterize(
         decoded,
@@ -46,9 +62,14 @@ export async function generateMultiImagePdf(
     }
     check();
     const buffer = await blob.arrayBuffer();
-    const image = blob.type === 'image/jpeg' ? await doc.embedJpg(buffer) : await doc.embedPng(buffer);
+    const image =
+      blob.type === 'image/jpeg' ? await doc.embedJpg(buffer) : await doc.embedPng(buffer);
     prepared.push({ image, fitted, rotation: adjustment.rotation });
-    progress({ done: i + 1, total, message: 'Preparando imagen ' + (i + 1) + ' de ' + pieces.length + '…' });
+    progress({
+      done: i + 1,
+      total,
+      message: 'Preparando imagen ' + (i + 1) + ' de ' + pieces.length + '…',
+    });
     await new Promise((resolve) => setTimeout(resolve, 0));
   }
   for (let i = 0; i < layout.sheetCount; i++) {

@@ -40,7 +40,6 @@ Por defecto se omiten las hojas sin contenido visible: fuera de la imagen, trans
 
 Los límites de esta modalidad son 500 piezas por hoja, 10.000 copias y 100 hojas. La cuadrícula distribuye piezas rectangulares uniformes; no corresponde a plantillas de etiquetas precortadas ni hace cortes de contorno. No se infiere un tamaño físico fiable de los píxeles de una imagen: lo determinas tú con las medidas de la pieza.
 
-
 ### Credenciales con imágenes diferentes
 
 En **Stickers y tarjetas**, selecciona **Imágenes diferentes por credencial** en el paso 1.
