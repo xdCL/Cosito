@@ -88,6 +88,30 @@ export function renderCopies(
   }
 }
 
+export function renderMixedCopies(
+  doc: PDFDocument,
+  layout: RepeatLayout,
+  pieces: { image: PDFImage; fitted: Rect; rotation: ImageRotation }[],
+  cutGuides: boolean,
+) {
+  const page = doc.addPage([mmToPt(layout.paperWidthMm), mmToPt(layout.paperHeightMm)]);
+  for (const [index, piece] of pieces.entries()) {
+    const slot = layout.slots[index];
+    if (!slot) throw new Error('La cuadrícula no tiene suficientes espacios para las imágenes.');
+    const copy = placeCopy(layout, slot, piece.fitted, piece.rotation);
+    drawClippedImage(page, piece.image, layout.paperHeightMm, slot, copy.rect, copy.rotation);
+    if (cutGuides)
+      page.drawRectangle({
+        x: mmToPt(slot.x),
+        y: mmToPt(layout.paperHeightMm - slot.y - slot.height),
+        width: mmToPt(slot.width),
+        height: mmToPt(slot.height),
+        borderWidth: 0.3,
+        borderColor: rgb(0.6, 0.6, 0.6),
+      });
+  }
+}
+
 export function renderTile(
   doc: PDFDocument,
   image: PDFImage,
