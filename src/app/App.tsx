@@ -84,6 +84,27 @@ export function App() {
     onRegisterError: () =>
       setOfflineMessage('La instalación sin conexión no está disponible en este navegador.'),
   });
+  const [confirmedUpdate, setConfirmedUpdate] = useState(false);
+  useEffect(() => {
+    if (!needRefresh || !('serviceWorker' in navigator)) {
+      setConfirmedUpdate(false);
+      return;
+    }
+    let cancelled = false;
+    void navigator.serviceWorker.getRegistration(import.meta.env.BASE_URL)
+      .then((registration) => {
+        if (!cancelled) {
+          // A fresh install isn't an update: require an existing controller and a waiting worker.
+          setConfirmedUpdate(Boolean(navigator.serviceWorker.controller && registration?.waiting));
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setConfirmedUpdate(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [needRefresh]);
   // Recheck when the app returns to the foreground, plus periodically while it stays open.
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return;
@@ -858,7 +879,7 @@ export function App() {
         }}
       />
       <UpdatePrompt
-        available={needRefresh}
+        available={confirmedUpdate}
         busy={busy}
         hasWork={!!image || pieces.length > 0 || status.kind === 'completed'}
         toolName={brand.toolName}
