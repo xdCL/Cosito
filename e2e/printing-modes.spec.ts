@@ -104,3 +104,49 @@ test('100 stickers a 6 por hoja: PDF A4 de 17 hojas con 4 copias en la última',
     }
   }
 });
+
+test('credenciales distintas: carga múltiple, reordena y exporta dos hojas sin duplicados', async ({
+  page,
+}) => {
+  const solid = (name: string, red: number, green: number, blue: number) => {
+    const png = new PNG({ width: 80, height: 80 });
+    for (let i = 0; i < png.data.length; i += 4) {
+      png.data[i] = red;
+      png.data[i + 1] = green;
+      png.data[i + 2] = blue;
+      png.data[i + 3] = 255;
+    }
+    return { name, mimeType: 'image/png', buffer: PNG.sync.write(png) };
+  };
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('./');
+  await page.getByRole('button', { name: 'Stickers y tarjetas' }).click();
+  await page.getByRole('combobox', { name: 'Formato de pieza' }).selectOption('badge');
+  await page.getByRole('radio', { name: 'Imágenes diferentes por credencial' }).check();
+  await page.getByLabel('Papel', { exact: true }).selectOption('a4');
+  await page.getByRole('spinbutton', { name: 'Copias por hoja' }).fill('2');
+  await page
+    .getByLabel('Seleccionar imágenes para credenciales')
+    .setInputFiles([
+      solid('roja.png', 255, 0, 0),
+      solid('verde.png', 0, 255, 0),
+      solid('azul.png', 0, 0, 255),
+    ]);
+  await expect(page.locator('.multi-piece')).toHaveCount(3);
+  await expect(page.locator('.repeat-count')).toHaveText(
+    '3 imágenes · 2 por hoja · 1 en la última',
+  );
+  await expect(page.locator('.sheet-count')).toHaveText('2 hojas');
+  await expect(page.locator('.repeat-piece')).toHaveCount(2);
+  await page.getByRole('button', { name: 'Mover credencial 1 hacia adelante' }).click();
+  await expect(page.locator('.multi-piece-heading span').first()).toHaveText('verde.png');
+  await page.getByRole('combobox', { name: 'Vista de la hoja' }).selectOption('last');
+  await expect(page.locator('.repeat-piece')).toHaveCount(1);
+  const pdf = await exportPdf(page);
+  expect(pdf.getPageCount()).toBe(2);
+  const first = pdf.getPage(0).node.Resources()?.lookup(PDFName.of('XObject'), PDFDict);
+  const second = pdf.getPage(1).node.Resources()?.lookup(PDFName.of('XObject'), PDFDict);
+  expect(first?.values()).toHaveLength(2);
+  expect(second?.values()).toHaveLength(1);
+  expect(new Set(first?.values().map((ref) => ref.toString())).size).toBe(2);
+});

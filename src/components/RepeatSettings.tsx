@@ -77,41 +77,48 @@ export function RepeatSettings({
       <p class="section-note">
         Deja «Copias por hoja» vacío para aprovechar la cuadrícula al máximo.
       </p>
-      <div class="repeat-fields">
-        <label>
-          Plan de impresión
-          <select
-            value={value.run}
-            onChange={(e) => change({ run: e.currentTarget.value as RepeatConfig['run'] })}
-          >
-            <option value="sheets">Llenar hojas</option>
-            <option value="copies">Cantidad total</option>
-          </select>
-        </label>
-        {value.run === 'sheets' ? (
+      {value.imageMode === 'multiple' ? (
+        <p class="section-note">
+          La tirada tendrá una credencial por imagen cargada. Cosito calculará automáticamente las
+          hojas necesarias, sin repetir imágenes.
+        </p>
+      ) : (
+        <div class="repeat-fields">
           <label>
-            Hojas a llenar
-            <input
-              type="number"
-              min="1"
-              step="1"
-              value={value.sheets}
-              onInput={(e) => change({ sheets: e.currentTarget.value })}
-            />
+            Plan de impresión
+            <select
+              value={value.run}
+              onChange={(e) => change({ run: e.currentTarget.value as RepeatConfig['run'] })}
+            >
+              <option value="sheets">Llenar hojas</option>
+              <option value="copies">Cantidad total</option>
+            </select>
           </label>
-        ) : (
-          <label>
-            Cantidad total de copias
-            <input
-              type="number"
-              min="1"
-              step="1"
-              value={value.copies}
-              onInput={(e) => change({ copies: e.currentTarget.value })}
-            />
-          </label>
-        )}
-      </div>
+          {value.run === 'sheets' ? (
+            <label>
+              Hojas a llenar
+              <input
+                type="number"
+                min="1"
+                step="1"
+                value={value.sheets}
+                onInput={(e) => change({ sheets: e.currentTarget.value })}
+              />
+            </label>
+          ) : (
+            <label>
+              Cantidad total de copias
+              <input
+                type="number"
+                min="1"
+                step="1"
+                value={value.copies}
+                onInput={(e) => change({ copies: e.currentTarget.value })}
+              />
+            </label>
+          )}
+        </div>
+      )}
       <label class="check-label">
         <input
           type="checkbox"

@@ -3,28 +3,40 @@ import { imageTransform, placeImage, type ImageAdjustment } from '../core/image-
 import { placeCopy, type RepeatLayout } from '../core/repetition';
 import { formatSize } from '../core/units';
 import type { LoadedImage } from '../image/decode-image';
+import type { MultiPiece } from '../app/multi-images';
 
 export function RepeatSummary({
   layout,
   error,
   paperName,
+  distinct = false,
 }: {
   layout: RepeatLayout | null;
   error: string;
   paperName: string;
+  distinct?: boolean;
 }) {
   return (
     <div class="result-summary" aria-live="polite">
       <p class="eyebrow">ASÍ QUEDARÁ TU TIRADA</p>
-      <h2 id="result-title">Tus hojas de repeticiones</h2>
+      <h2 id="result-title">
+        {distinct ? 'Tus hojas de credenciales' : 'Tus hojas de repeticiones'}
+      </h2>
       {layout ? (
         <>
           <p class="sheet-count">
             <strong>{layout.sheetCount}</strong> {layout.sheetCount === 1 ? 'hoja' : 'hojas'}
           </p>
           <p class="repeat-count">
-            {layout.copies} {layout.copies === 1 ? 'copia' : 'copias'} · {layout.slots.length} por
-            hoja
+            {layout.copies}{' '}
+            {distinct
+              ? layout.copies === 1
+                ? 'imagen'
+                : 'imágenes'
+              : layout.copies === 1
+                ? 'copia'
+                : 'copias'}{' '}
+            · {layout.slots.length} por hoja
             {layout.sheetCount > 1 && layout.lastSheetCount < layout.perSheet
               ? ` · ${layout.lastSheetCount} en la última`
               : ''}
@@ -49,20 +61,23 @@ export function RepeatPreview({
   layout,
   adjustment,
   cutGuides,
+  pieces,
 }: {
   image: LoadedImage | null;
   layout: RepeatLayout;
   adjustment: ImageAdjustment;
   cutGuides: boolean;
+  pieces?: MultiPiece[];
 }) {
   const [last, setLast] = useState(false);
   const hasPartial = layout.sheetCount > 1 && layout.lastSheetCount < layout.perSheet;
-  const count = hasPartial && last ? layout.lastSheetCount : layout.slots.length;
-  const fitted =
-    image && placeImage(image.width, image.height, layout.widthMm, layout.heightMm, adjustment);
+  const allowLast = pieces ? layout.sheetCount > 1 : hasPartial;
+  const currentPage = allowLast && last ? layout.sheetCount - 1 : 0;
+  const startIndex = currentPage * layout.perSheet;
+  const count = currentPage === layout.sheetCount - 1 ? layout.lastSheetCount : layout.slots.length;
   return (
     <figure class="preview-figure repeat-preview">
-      {hasPartial && (
+      {allowLast && (
         <label class="repeat-preview-selector">
           Vista de la hoja
           <select
@@ -83,20 +98,21 @@ export function RepeatPreview({
         aria-label={`Vista previa de una hoja con ${count} ${count === 1 ? 'copia' : 'copias'}`}
         viewBox={`0 0 ${layout.paperWidthMm} ${layout.paperHeightMm}`}
       >
-        {image && (
-          <defs>
-            <image
-              id="repeat-artwork"
-              href={image.previewUrl}
-              width="1"
-              height="1"
-              preserveAspectRatio="none"
-            />
-          </defs>
-        )}
         {layout.slots.slice(0, count).map((slot, index) => {
+          const piece = pieces?.[startIndex + index];
+          const artwork = piece?.image ?? image;
+          const adjustmentForPiece = piece?.adjustment ?? adjustment;
+          const fitted =
+            artwork &&
+            placeImage(
+              artwork.width,
+              artwork.height,
+              layout.widthMm,
+              layout.heightMm,
+              adjustmentForPiece,
+            );
           const local = { ...slot, x: 0, y: 0 };
-          const copy = fitted && placeCopy(layout, local, fitted, adjustment.rotation);
+          const copy = fitted && placeCopy(layout, local, fitted, adjustmentForPiece.rotation);
           return (
             <svg
               key={index}
@@ -107,9 +123,12 @@ export function RepeatPreview({
               height={slot.height}
               overflow="hidden"
             >
-              {copy && (
-                <use
-                  href="#repeat-artwork"
+              {copy && artwork && (
+                <image
+                  href={artwork.previewUrl}
+                  width="1"
+                  height="1"
+                  preserveAspectRatio="none"
                   transform={`matrix(${imageTransform(copy.rect, copy.rotation).join(' ')})`}
                 />
               )}
@@ -126,8 +145,8 @@ export function RepeatPreview({
         })}
       </svg>
       <figcaption>
-        {!image
-          ? 'Agrega tu imagen para ver cómo queda en cada pieza.'
+        {!(image || pieces?.length)
+          ? 'Agrega imágenes para ver cómo queda cada pieza.'
           : cutGuides
             ? 'El PDF incluye líneas de corte alrededor de cada pieza.'
             : 'Los contornos son solo una referencia de la vista previa.'}

@@ -13,6 +13,10 @@ export async function generatePdf(
   progress: (p: Progress) => void,
   signal?: AbortSignal,
 ): Promise<PdfResult> {
+  if (request.kind === 'repeat' && request.pieces?.length) {
+    const { generateMultiImagePdf } = await import('./generate-multi');
+    return generateMultiImagePdf(request, progress, signal);
+  }
   const { file, options } = request;
   const extra = request.kind === 'mosaic' ? Number(options.guide) + Number(options.calibration) : 0;
   let total = request.layout.sheetCount + extra;
