@@ -195,7 +195,9 @@ test('permite crear otro mosaico con otra foto sin reiniciar ni perder las medid
 
   const picker = page.waitForEvent('filechooser');
   await another.click();
-  await (await picker).setFiles({
+  await (
+    await picker
+  ).setFiles({
     name: 'segunda-foto.webp',
     mimeType: 'image/webp',
     buffer: await readFile('e2e/fixtures/grid.webp'),

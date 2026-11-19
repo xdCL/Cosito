@@ -20,7 +20,7 @@ Desarrollado por **xdCL**. Versión **0.1.0**, licencia MIT.
 3. Elige Carta / Letter, A4, Oficio (21,6 × 33 cm), Legal o papel personalizado.
 4. En **Ajustar imagen**, puedes girarla 90° a izquierda o derecha, centrarla o elegir su posición. Revisa el mosaico y pulsa **Crear PDF**, luego **Descargar PDF**.
 5. Cuando el PDF esté listo, puedes pulsar **Crear otro mosaico con otra foto** para elegir otra imagen sin reiniciar el proyecto. Se conservan las medidas y el papel; descarga antes el PDF anterior, porque será sustituido al cargar la nueva foto. Si cancelas el selector, el PDF actual sigue disponible.\n6. Imprime usando **Tamaño real / 100 %**. Desactiva **Ajustar a página**.
-7. Recorta los márgenes. En hojas con vecinos **impresos** a la izquierda o arriba, recorta también la banda repetida izquierda o superior. Conserva esas bandas en los bordes externos. Junta los bordes recortados y pega por detrás siguiendo A1, A2…; B1, B2…
+6. Recorta los márgenes. En hojas con vecinos **impresos** a la izquierda o arriba, recorta también la banda repetida izquierda o superior. Conserva esas bandas en los bordes externos. Junta los bordes recortados y pega por detrás siguiendo A1, A2…; B1, B2…
 
 Predeterminado: margen seguro 5 mm, solape 5 mm, imagen completa y orientación automática. El solape repite contenido; **no aumenta el tamaño final**. Puedes cubrir todo recortando bordes o ajustar exacto deformando la imagen. Opciones avanzadas incluyen calidad, orientación, marcas y páginas opcionales de guía y calibración; no se añaden hojas extra por defecto.
 
