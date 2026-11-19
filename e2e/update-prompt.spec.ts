@@ -26,7 +26,9 @@ test('modal de actualización cubre la página y exige escoger una acción', asy
   await expect(modal).not.toBeVisible();
 });
 
-test('si hay un PDF preparado, advierte antes de actualizar y permite conservarlo', async ({ page }) => {
+test('si hay un PDF preparado, advierte antes de actualizar y permite conservarlo', async ({
+  page,
+}) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('./');
   await page.getByLabel('Seleccionar archivo de imagen').setInputFiles(fixture);

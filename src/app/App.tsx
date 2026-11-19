@@ -91,13 +91,17 @@ export function App() {
     const checkUpdates = async () => {
       if (!navigator.onLine || document.visibilityState !== 'visible') return;
       try {
-        const registration = await navigator.serviceWorker.getRegistration(import.meta.env.BASE_URL);
+        const registration = await navigator.serviceWorker.getRegistration(
+          import.meta.env.BASE_URL,
+        );
         if (mounted) await registration?.update();
       } catch {
         // An offline or transient update check must never interrupt a print project.
       }
     };
-    const refreshCheck = () => { void checkUpdates(); };
+    const refreshCheck = () => {
+      void checkUpdates();
+    };
     const interval = window.setInterval(refreshCheck, 15 * 60 * 1000);
     window.addEventListener('focus', refreshCheck);
     document.addEventListener('visibilitychange', refreshCheck);

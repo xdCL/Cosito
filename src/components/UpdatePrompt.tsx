@@ -9,13 +9,7 @@ type UpdatePromptProps = {
 };
 
 /** A real modal blocks the rest of the page until the user chooses what to do. */
-export function UpdatePrompt({
-  available,
-  busy,
-  hasWork,
-  toolName,
-  onUpdate,
-}: UpdatePromptProps) {
+export function UpdatePrompt({ available, busy, hasWork, toolName, onUpdate }: UpdatePromptProps) {
   const dialog = useRef<HTMLDialogElement>(null);
   const [deferred, setDeferred] = useState(false);
   const [updating, setUpdating] = useState(false);
@@ -72,7 +66,11 @@ export function UpdatePrompt({
             sesión. Descarga tu PDF antes de actualizar o elige seguir trabajando.
           </p>
         )}
-        {error && <p class="error" role="alert">{error}</p>}
+        {error && (
+          <p class="error" role="alert">
+            {error}
+          </p>
+        )}
         <div class="update-dialog-actions">
           <button
             type="button"
