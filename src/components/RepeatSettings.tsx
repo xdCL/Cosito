@@ -118,7 +118,6 @@ export function RepeatSettings({
           </label>
         )}
       </div>
-      </div>
       )}
       <label class="check-label">
         <input
