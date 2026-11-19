@@ -1,7 +1,9 @@
 import { test, expect } from '@playwright/test';
 test('temas persistentes, sistema y papel blanco', async ({ page, browserName }) => {
   const navigations: string[] = [];
-  page.on('framenavigated', (frame) => { if (frame === page.mainFrame()) navigations.push(frame.url()); });
+  page.on('framenavigated', (frame) => {
+    if (frame === page.mainFrame()) navigations.push(frame.url());
+  });
   await page.emulateMedia({ colorScheme: 'dark', reducedMotion: 'reduce' });
   await page.goto('./');
   await expect(page.getByLabel('Tema', { exact: true })).toHaveValue('system');
@@ -21,7 +23,7 @@ test('temas persistentes, sistema y papel blanco', async ({ page, browserName })
       height: (document.querySelector('#height') as HTMLInputElement | null)?.value,
       error: document.querySelector('#config-error')?.textContent,
       posterCount: document.querySelectorAll('.poster').length,
-      dialogCount: Array.from(document.querySelectorAll('dialog')).filter(d => d.open).length,
+      dialogCount: Array.from(document.querySelectorAll('dialog')).filter((d) => d.open).length,
       mode: document.querySelector('.project-mode [aria-pressed="true"]')?.textContent,
     }));
     console.log('FIREFOX-POSTER-DIAGNOSTIC', { details, navigations });
