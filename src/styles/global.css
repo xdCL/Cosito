@@ -875,10 +875,21 @@ figcaption {
   font-size: 0.75rem;
   color: var(--color-text-muted);
 }
-.update {
-  padding: 18px;
+.update-reminder {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 18px;
+  margin-block: 18px;
   border: 1px solid var(--color-border);
-  margin-block: 16px;
+  border-left: 5px solid var(--color-sun);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  font-size: 0.85rem;
+}
+.update-reminder .text-button {
+  flex-shrink: 0;
 }
 footer {
   border-top: 1px solid var(--color-border);
@@ -914,6 +925,71 @@ dialog {
 }
 dialog::backdrop {
   background: var(--color-overlay);
+}
+.update-dialog {
+  width: min(520px, calc(100% - 28px));
+  border-top: 7px solid var(--color-sun);
+  background: var(--color-surface);
+  padding: clamp(22px, 5vw, 36px);
+  box-shadow: 0 24px 90px #15102270;
+}
+.update-dialog::backdrop {
+  background: #171327cf;
+  -webkit-backdrop-filter: blur(7px);
+  backdrop-filter: blur(7px);
+}
+.update-dialog-symbol {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  margin-bottom: 18px;
+  border-radius: 50%;
+  color: var(--color-badge-ink);
+  background: var(--color-sun);
+  font-family: var(--font-body);
+  font-size: 2rem;
+  line-height: 1;
+}
+.update-dialog .eyebrow {
+  margin-bottom: 10px;
+}
+.update-dialog h2 {
+  margin-bottom: 18px;
+  font-size: clamp(1.7rem, 4vw, 2.2rem);
+}
+.update-dialog p {
+  font-size: 0.95rem;
+}
+.update-dialog-warning {
+  padding: 14px 16px;
+  border-left: 4px solid var(--color-coral);
+  border-radius: var(--radius-sm);
+  background: var(--color-accent-soft);
+}
+.update-dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 24px;
+}
+.update-dialog-actions button {
+  flex: 1 1 175px;
+  justify-content: center;
+}
+.update-dialog-footnote {
+  margin: 18px 0 0;
+  color: var(--color-text-muted);
+  font-size: 0.73rem !important;
+}
+@media (max-width: 420px) {
+  .update-dialog-actions {
+    flex-direction: column;
+  }
+  .update-reminder {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 .dialog-head {
   display: flex;
