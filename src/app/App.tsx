@@ -88,8 +88,13 @@ export function App() {
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return;
     let mounted = true;
+    // The initial service worker installation handles its own checks; do not race it.
+    let lastCheck = Date.now();
     const checkUpdates = async () => {
+      const now = Date.now();
+      if (now - lastCheck < 15 * 60 * 1000) return;
       if (!navigator.onLine || document.visibilityState !== 'visible') return;
+      lastCheck = now;
       try {
         const registration = await navigator.serviceWorker.getRegistration(
           import.meta.env.BASE_URL,
