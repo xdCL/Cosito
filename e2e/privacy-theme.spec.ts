@@ -18,14 +18,21 @@ test('temas persistentes, sistema y papel blanco', async ({ page, browserName })
   await page.getByLabel('Ancho', { exact: true }).fill('73');
   await page.getByLabel('Alto', { exact: true }).fill('46');
   if (browserName === 'firefox') {
-    const details = await page.evaluate(() => ({
-      width: (document.querySelector('#width') as HTMLInputElement | null)?.value,
-      height: (document.querySelector('#height') as HTMLInputElement | null)?.value,
-      error: document.querySelector('#config-error')?.textContent,
-      posterCount: document.querySelectorAll('.poster').length,
-      dialogCount: Array.from(document.querySelectorAll('dialog')).filter((d) => d.open).length,
-      mode: document.querySelector('.project-mode [aria-pressed="true"]')?.textContent,
-    }));
+    const details = await page.evaluate(async () => {
+      const registration = await navigator.serviceWorker.getRegistration();
+      return {
+        width: (document.querySelector('#width') as HTMLInputElement | null)?.value,
+        height: (document.querySelector('#height') as HTMLInputElement | null)?.value,
+        error: document.querySelector('#config-error')?.textContent,
+        posterCount: document.querySelectorAll('.poster').length,
+        dialogCount: Array.from(document.querySelectorAll('dialog')).filter((d) => d.open).length,
+        dialogText: Array.from(document.querySelectorAll('dialog')).find((d) => d.open)?.textContent?.slice(0, 90),
+        mode: document.querySelector('.project-mode [aria-pressed="true"]')?.textContent,
+        controller: Boolean(navigator.serviceWorker.controller),
+        waiting: Boolean(registration?.waiting),
+        active: Boolean(registration?.active),
+      };
+    });
     console.log('FIREFOX-POSTER-DIAGNOSTIC', { details, navigations });
   }
   await expect(page.locator('.poster')).toHaveCSS('background-color', 'rgb(255, 255, 255)');
