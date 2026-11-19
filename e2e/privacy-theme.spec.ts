@@ -20,13 +20,14 @@ test('temas persistentes, sistema y papel blanco', async ({ page, browserName })
   if (browserName === 'firefox') {
     const details = await page.evaluate(async () => {
       const registration = await navigator.serviceWorker.getRegistration();
+      const activeDialog = Array.from(document.querySelectorAll('dialog')).find((d) => d.open);
       return {
         width: (document.querySelector('#width') as HTMLInputElement | null)?.value,
         height: (document.querySelector('#height') as HTMLInputElement | null)?.value,
         error: document.querySelector('#config-error')?.textContent,
         posterCount: document.querySelectorAll('.poster').length,
         dialogCount: Array.from(document.querySelectorAll('dialog')).filter((d) => d.open).length,
-        dialogText: Array.from(document.querySelectorAll('dialog')).find((d) => d.open)?.textContent?.slice(0, 90),
+        dialogText: activeDialog?.textContent?.slice(0, 90),
         mode: document.querySelector('.project-mode [aria-pressed="true"]')?.textContent,
         controller: Boolean(navigator.serviceWorker.controller),
         waiting: Boolean(registration?.waiting),
