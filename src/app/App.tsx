@@ -602,7 +602,7 @@ export function App() {
           </div>
           <section class="result" id="resultado" tabIndex={-1} aria-labelledby="result-title">
             {repeating ? (
-              <RepeatSummary layout={repeatLayout} error={repetition.error} paperName={paperName} />
+              <RepeatSummary layout={repeatLayout} error={repetition.error} paperName={paperName} distinct={mixed} />
             ) : (
               <ResultSummary
                 hasImage={!!image}
