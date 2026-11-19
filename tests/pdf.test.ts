@@ -14,7 +14,7 @@ import { calculateLayout } from '../src/core/tiling';
 import { DEFAULT_IMAGE_ADJUSTMENT, placeImage } from '../src/core/image-fit';
 import { calculateRepetition } from '../src/core/repetition';
 import { mmToPt, ptToMm } from '../src/core/units';
-import { renderCalibration, renderGuide, renderTile, renderCopies } from '../src/pdf/render-page';
+import { renderCalibration, renderGuide, renderTile, renderCopies, renderMixedCopies } from '../src/pdf/render-page';
 import { fixtureColor, fixturePng } from '../scripts/generate-fixtures';
 const base = {
   posterWidthMm: 500,
@@ -83,6 +83,37 @@ describe('PDF físico e imagen compartida', () => {
     } finally {
       await task.destroy();
     }
+  });
+  it('coloca imágenes distintas en hojas sucesivas sin duplicar los espacios vacíos', async () => {
+    const layout = calculateRepetition({
+      widthMm: 85.6, heightMm: 53.98, paperWidthMm: 210, paperHeightMm: 297,
+      marginMm: 5, gapMm: 3, orientation: 'portrait', allowRotation: true,
+      perSheet: 2, run: { kind: 'copies', count: 3 },
+    });
+    const doc = await PDFDocument.create();
+    const red = createCanvas(50, 50);
+    red.getContext('2d').fillStyle = '#ff0000';
+    red.getContext('2d').fillRect(0, 0, 50, 50);
+    const blue = createCanvas(50, 50);
+    blue.getContext('2d').fillStyle = '#0000ff';
+    blue.getContext('2d').fillRect(0, 0, 50, 50);
+    const redImage = await doc.embedPng(red.toBuffer('image/png'));
+    const blueImage = await doc.embedPng(blue.toBuffer('image/png'));
+    const fit = placeImage(50, 50, layout.widthMm, layout.heightMm, DEFAULT_IMAGE_ADJUSTMENT);
+    renderMixedCopies(doc, layout, [
+      { image: redImage, fitted: fit, rotation: 0 },
+      { image: blueImage, fitted: fit, rotation: 0 },
+    ], false);
+    renderMixedCopies(doc, layout, [{ image: blueImage, fitted: fit, rotation: 0 }], false);
+    const pdf = await PDFDocument.load(await doc.save());
+    expect(pdf.getPageCount()).toBe(2);
+    const first = pdf.getPage(0).node.Resources()?.lookup(PDFName.of('XObject'), PDFDict);
+    const second = pdf.getPage(1).node.Resources()?.lookup(PDFName.of('XObject'), PDFDict);
+    expect(first?.values()).toHaveLength(2);
+    expect(second?.values()).toHaveLength(1);
+    expect(new Set(first?.values().map((ref) => ref.toString())).size).toBe(2);
+    expect(ptToMm(pdf.getPage(0).getWidth())).toBeCloseTo(210, 6);
+    expect(ptToMm(pdf.getPage(0).getHeight())).toBeCloseTo(297, 6);
   });
   it('lee primera y última página: Carta vertical exacta (1e-6 mm)', async () => {
     const layout = calculateLayout(base);
