@@ -77,6 +77,12 @@ export function RepeatSettings({
       <p class="section-note">
         Deja «Copias por hoja» vacío para aprovechar la cuadrícula al máximo.
       </p>
+      {value.imageMode === 'multiple' ? (
+        <p class="section-note">
+          La tirada tendrá una credencial por imagen cargada. Cosito calculará automáticamente
+          las hojas necesarias, sin repetir imágenes.
+        </p>
+      ) : (
       <div class="repeat-fields">
         <label>
           Plan de impresión
@@ -112,6 +118,8 @@ export function RepeatSettings({
           </label>
         )}
       </div>
+      </div>
+      )}
       <label class="check-label">
         <input
           type="checkbox"
