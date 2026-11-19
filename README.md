@@ -62,6 +62,7 @@ Cada proyecto empieza con ancho y alto vacíos. No hay una medida de póster fij
 - Tamaños oficiales A3–A0 y presets personales con creación, renombrado y eliminación local.
 - PDF físico en milímetros, progreso, cancelación y descarga local.
 - PWA instalable y uso offline después de que termine la primera descarga de assets.
+- Al detectarse una nueva versión, aparece una **ventana modal** con fondo oscurecido y desenfocado; bloquea temporalmente los controles hasta elegir entre **Actualizar ahora** y **Seguir trabajando**. Si hay imágenes o PDF abiertos, avisa para descargarlos primero. Al posponer, deja un recordatorio para volver a abrir el aviso sin perder el proyecto. Se revisan nuevas versiones cuando vuelves a la pestaña y cada 15 minutos, siempre que haya conexión.
 - Interfaz móvil, controles táctiles, teclado, diálogo nativo con foco y Escape.
 - Una columna centrada en todas las pantallas. Menú flotante **Secciones** para saltar a imagen, medidas, papel, vista previa/PDF, opciones y montaje; abre las opciones al seleccionarlas y se cierra con Escape o al salir.
 

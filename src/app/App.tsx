@@ -25,6 +25,7 @@ import { PosterPreview } from '../components/PosterPreview';
 import { RepeatPreview, RepeatSummary } from '../components/RepeatPreview';
 import { RepeatSettings } from '../components/RepeatSettings';
 import { MultiImagePicker } from '../components/MultiImagePicker';
+import { UpdatePrompt } from '../components/UpdatePrompt';
 import { PresetDialog } from '../components/PresetDialog';
 import { loadSkin, saveSkin, SKINS, type Skin } from '../theme/skin';
 type AppStatus =
@@ -83,6 +84,59 @@ export function App() {
     onRegisterError: () =>
       setOfflineMessage('La instalación sin conexión no está disponible en este navegador.'),
   });
+  const [confirmedUpdate, setConfirmedUpdate] = useState(false);
+  useEffect(() => {
+    if (!needRefresh || !('serviceWorker' in navigator)) {
+      setConfirmedUpdate(false);
+      return;
+    }
+    let cancelled = false;
+    void navigator.serviceWorker
+      .getRegistration(import.meta.env.BASE_URL)
+      .then((registration) => {
+        if (!cancelled) {
+          // A fresh install isn't an update: require an existing controller and a waiting worker.
+          setConfirmedUpdate(Boolean(navigator.serviceWorker.controller && registration?.waiting));
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setConfirmedUpdate(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [needRefresh]);
+  // Recheck when the app returns to the foreground, plus periodically while it stays open.
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return;
+    let mounted = true;
+    // The initial service worker installation handles its own checks; do not race it.
+    let lastCheck = Date.now();
+    const checkUpdates = async () => {
+      const now = Date.now();
+      if (now - lastCheck < 15 * 60 * 1000) return;
+      if (!navigator.onLine || document.visibilityState !== 'visible') return;
+      lastCheck = now;
+      try {
+        const registration = await navigator.serviceWorker.getRegistration(
+          import.meta.env.BASE_URL,
+        );
+        if (mounted) await registration?.update();
+      } catch {
+        // An offline or transient update check must never interrupt a print project.
+      }
+    };
+    const refreshCheck = () => {
+      void checkUpdates();
+    };
+    const interval = window.setInterval(refreshCheck, 15 * 60 * 1000);
+    document.addEventListener('visibilitychange', refreshCheck);
+    return () => {
+      mounted = false;
+      window.clearInterval(interval);
+      document.removeEventListener('visibilitychange', refreshCheck);
+    };
+  }, []);
   const generating = status.kind === 'generating';
   const busy = generating || loading;
   const mixed = repeating && repeat.imageMode === 'multiple';
@@ -787,18 +841,6 @@ export function App() {
             {offlineMessage || 'Disponible sin conexión en este dispositivo.'}
           </p>
         )}
-        {needRefresh && (
-          <aside class="update">
-            <p>
-              Hay una nueva versión de {brand.toolName}.
-              {image &&
-                ' Al actualizar se cerrará tu imagen actual. Descarga primero el PDF que quieras conservar.'}
-            </p>
-            <button disabled={busy} onClick={() => void updateServiceWorker(true)}>
-              {image ? 'Actualizar y cerrar imagen' : 'Actualizar'}
-            </button>
-          </aside>
-        )}
         {installEvent && (
           <button
             class="text-button"
@@ -836,6 +878,13 @@ export function App() {
           }));
           setStatus({ kind: hasArtwork ? 'ready' : 'empty' });
         }}
+      />
+      <UpdatePrompt
+        available={confirmedUpdate}
+        busy={busy}
+        hasWork={!!image || pieces.length > 0 || status.kind === 'completed'}
+        toolName={brand.toolName}
+        onUpdate={() => updateServiceWorker(true)}
       />
     </>
   );
