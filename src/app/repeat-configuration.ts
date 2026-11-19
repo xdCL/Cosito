@@ -15,6 +15,7 @@ export type RepeatConfig = {
   perSheet: string;
   allowRotation: boolean;
   cutGuides: boolean;
+  imageMode: 'single' | 'multiple';
 };
 
 export const initialRepeat: RepeatConfig = {
@@ -28,4 +29,5 @@ export const initialRepeat: RepeatConfig = {
   perSheet: '',
   allowRotation: true,
   cutGuides: false,
+  imageMode: 'single',
 };
