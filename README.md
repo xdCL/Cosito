@@ -40,6 +40,14 @@ Por defecto se omiten las hojas sin contenido visible: fuera de la imagen, trans
 
 Los límites de esta modalidad son 500 piezas por hoja, 10.000 copias y 100 hojas. La cuadrícula distribuye piezas rectangulares uniformes; no corresponde a plantillas de etiquetas precortadas ni hace cortes de contorno. No se infiere un tamaño físico fiable de los píxeles de una imagen: lo determinas tú con las medidas de la pieza.
 
+
+### Credenciales con imágenes diferentes
+
+En **Stickers y tarjetas**, selecciona **Imágenes diferentes por credencial** en el paso 1.
+Puedes cargar varios JPG/PNG/WEBP a la vez, o ir añadiéndolos; se asigna una imagen por pieza siguiendo el orden de la lista. Cada credencial permite **reemplazar**, **quitar**, **girar**, cambiar su **ajuste y posición**, y **reordenar** mediante flechas o arrastrando su tarjeta.
+
+Cosito calcula automáticamente el número de hojas según las imágenes cargadas y la cantidad de piezas que caben por hoja. Por ejemplo, 14 credenciales con capacidad para 8 producen 2 páginas: 8 en la primera y 6 en la segunda, sin duplicaciones. El PDF mantiene las medidas reales, marcas de corte opcionales y márgenes configurados. Este modo admite hasta **100 imágenes** y **250 MB en total** (máximo 30 MB por imagen), y conserva el procesamiento local en el navegador. El modo **Repetir una imagen** sigue disponible sin cambios.
+
 ## Funciones
 
 Cada proyecto empieza con ancho y alto vacíos. No hay una medida de póster fija; 50 × 98 cm es sólo uno de los ejemplos usados para comprobar el cálculo.
