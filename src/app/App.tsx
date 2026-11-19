@@ -103,12 +103,10 @@ export function App() {
       void checkUpdates();
     };
     const interval = window.setInterval(refreshCheck, 15 * 60 * 1000);
-    window.addEventListener('focus', refreshCheck);
     document.addEventListener('visibilitychange', refreshCheck);
     return () => {
       mounted = false;
       window.clearInterval(interval);
-      window.removeEventListener('focus', refreshCheck);
       document.removeEventListener('visibilitychange', refreshCheck);
     };
   }, []);
@@ -840,13 +838,6 @@ export function App() {
           <a href={`${import.meta.env.BASE_URL}LICENSE`}>Licencia</a>
         </nav>
       </footer>
-      <UpdatePrompt
-        available={needRefresh}
-        busy={busy}
-        hasWork={!!image || pieces.length > 0 || status.kind === 'completed'}
-        toolName={brand.toolName}
-        onUpdate={() => updateServiceWorker(true)}
-      />
       <PresetDialog
         open={presetsOpen}
         close={() => setPresetsOpen(false)}
@@ -860,6 +851,13 @@ export function App() {
           }));
           setStatus({ kind: hasArtwork ? 'ready' : 'empty' });
         }}
+      />
+      <UpdatePrompt
+        available={needRefresh}
+        busy={busy}
+        hasWork={!!image || pieces.length > 0 || status.kind === 'completed'}
+        toolName={brand.toolName}
+        onUpdate={() => updateServiceWorker(true)}
       />
     </>
   );
