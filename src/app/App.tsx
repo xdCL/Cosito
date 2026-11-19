@@ -1,5 +1,6 @@
 import { initial, numeric, type Config } from './configuration';
 import { initialRepeat, type RepeatConfig } from './repeat-configuration';
+import { MAX_DISTINCT_PIECES, MAX_DISTINCT_BYTES, type MultiPiece } from './multi-images';
 import { AdvancedOptions } from '../components/AdvancedOptions';
 import { ResultSummary } from '../components/ResultSummary';
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
@@ -23,6 +24,7 @@ import { TypewriterWord } from '../components/TypewriterWord';
 import { PosterPreview } from '../components/PosterPreview';
 import { RepeatPreview, RepeatSummary } from '../components/RepeatPreview';
 import { RepeatSettings } from '../components/RepeatSettings';
+import { MultiImagePicker } from '../components/MultiImagePicker';
 import { PresetDialog } from '../components/PresetDialog';
 import { loadSkin, saveSkin, SKINS, type Skin } from '../theme/skin';
 type AppStatus =
@@ -58,6 +60,10 @@ export function App() {
   const [repeating, setRepeating] = useState(false);
   const [repeat, setRepeat] = useState(initialRepeat);
   const [image, setImage] = useState<LoadedImage | null>(null);
+  const [pieces, setPieces] = useState<MultiPiece[]>([]);
+  const piecesRef = useRef(pieces);
+  piecesRef.current = pieces;
+  const nextPieceId = useRef(1);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<AppStatus>({ kind: 'empty' });
   const [presetsOpen, setPresetsOpen] = useState(false);
@@ -79,6 +85,8 @@ export function App() {
   });
   const generating = status.kind === 'generating';
   const busy = generating || loading;
+  const mixed = repeating && repeat.imageMode === 'multiple';
+  const hasArtwork = mixed ? pieces.length > 0 : !!image;
   const paper = PAPERS.find((p) => p.id === config.paperId);
   const paperName = paper?.name || 'Papel personalizado';
   const calculation = useMemo(() => {
@@ -115,14 +123,14 @@ export function App() {
           orientation: config.orientation,
           allowRotation: repeat.allowRotation,
           perSheet: repeat.perSheet.trim() ? numeric(repeat.perSheet) : undefined,
-          run: { kind: repeat.run, count: numeric(repeat[repeat.run]) },
+          run: mixed ? { kind: 'copies', count: Math.max(1, pieces.length) } : { kind: repeat.run, count: numeric(repeat[repeat.run]) },
         }),
         error: '',
       };
     } catch (e) {
       return { layout: null, error: e instanceof Error ? e.message : 'Revisa las medidas.' };
     }
-  }, [config, paper, repeat, repeating]);
+  }, [config, paper, repeat, repeating, mixed, pieces.length]);
   const repeatLayout = repetition.layout;
   const target = layout
     ? { width: layout.posterWidthMm, height: layout.posterHeightMm }
@@ -155,6 +163,9 @@ export function App() {
     const timer = window.setTimeout(() => setShowValidation(true), 600);
     return () => window.clearTimeout(timer);
   }, [config]);
+  useEffect(() => () => {
+    for (const piece of piecesRef.current) URL.revokeObjectURL(piece.image.previewUrl);
+  }, []);
   useEffect(() => {
     const url = image?.previewUrl;
     return () => {
@@ -184,17 +195,79 @@ export function App() {
     if (busy) return;
     setShowValidation(false);
     setConfig((c) => ({ ...c, [key]: value }));
-    setStatus({ kind: image ? 'ready' : 'empty' });
+    setStatus({ kind: hasArtwork ? 'ready' : 'empty' });
   }
   function changeRepeat(patch: Partial<RepeatConfig>) {
     if (busy) return;
     setRepeat((value) => ({ ...value, ...patch }));
-    setStatus({ kind: image ? 'ready' : 'empty' });
+    setStatus({ kind: hasArtwork ? 'ready' : 'empty' });
   }
   function changeMode(next: boolean) {
     if (busy || repeating === next) return;
     setRepeating(next);
-    setStatus({ kind: image ? 'ready' : 'empty' });
+    setStatus({ kind: hasArtwork ? 'ready' : 'empty' });
+  }
+  function reorderPiece(from: number, to: number) {
+    if (busy || from === to || from < 0 || to < 0 || from >= pieces.length || to >= pieces.length) return;
+    setPieces((current) => {
+      const next = current.slice();
+      const [piece] = next.splice(from, 1);
+      next.splice(to, 0, piece);
+      return next;
+    });
+    setStatus({ kind: 'ready' });
+  }
+  function removePiece(index: number) {
+    if (busy || !pieces[index]) return;
+    URL.revokeObjectURL(pieces[index].image.previewUrl);
+    setPieces((current) => current.filter((_, i) => i !== index));
+    setStatus({ kind: 'ready' });
+  }
+  function adjustPiece(index: number, patch: Partial<MultiPiece['adjustment']>) {
+    if (busy) return;
+    setPieces((current) => current.map((piece, i) => i === index
+      ? { ...piece, adjustment: { ...piece.adjustment, ...patch } }
+      : piece));
+    setStatus({ kind: 'ready' });
+  }
+  async function selectPieceFiles(files: File[], replaceIndex?: number) {
+    if (!files.length || busy) return;
+    const replacing = replaceIndex !== undefined;
+    const count = pieces.length + files.length - Number(replacing);
+    const bytes = pieces.reduce((sum, piece, i) => sum + (i === replaceIndex ? 0 : piece.image.file.size), 0)
+      + files.reduce((sum, file) => sum + file.size, 0);
+    if (count > MAX_DISTINCT_PIECES || bytes > MAX_DISTINCT_BYTES) {
+      setStatus({ kind: 'error', message: 'Se admiten hasta 100 imágenes y 250 MB en total.' });
+      return;
+    }
+    const sequence = ++uploadSequence.current;
+    const loaded: LoadedImage[] = [];
+    setLoading(true);
+    try {
+      for (const file of files) loaded.push(await loadImage(file));
+      if (sequence !== uploadSequence.current) {
+        loaded.forEach((entry) => URL.revokeObjectURL(entry.previewUrl));
+        return;
+      }
+      const additions = loaded.map((entry) => ({
+        id: nextPieceId.current++,
+        image: entry,
+        adjustment: { ...DEFAULT_IMAGE_ADJUSTMENT },
+      }));
+      if (replacing && pieces[replaceIndex]) {
+        URL.revokeObjectURL(pieces[replaceIndex].image.previewUrl);
+        setPieces((current) => current.map((piece, i) => i === replaceIndex
+          ? { ...additions[0], adjustment: piece.adjustment }
+          : piece));
+      } else setPieces((current) => [...current, ...additions]);
+      setStatus({ kind: 'ready' });
+    } catch (e) {
+      loaded.forEach((entry) => URL.revokeObjectURL(entry.previewUrl));
+      if (sequence === uploadSequence.current)
+        setStatus({ kind: 'error', message: e instanceof Error ? e.message : 'No pudimos abrir estas imágenes.' });
+    } finally {
+      if (sequence === uploadSequence.current) setLoading(false);
+    }
   }
   async function selectFile(file?: File) {
     if (!file || generating) return;
@@ -223,15 +296,17 @@ export function App() {
     }
   }
   async function generate() {
-    if (!image || !target || busy || abort.current) return;
-    const options: PdfOptions = { ...config, filename: image.file.name, paperName };
+    const source = mixed ? pieces[0]?.image : image;
+    if (!source || !target || busy || abort.current) return;
+    const options: PdfOptions = { ...config, filename: source.file.name, paperName };
     const request: PdfRequest | undefined = layout
-      ? { kind: 'mosaic', file: image.file, layout, options, skipBlank: config.skipBlank }
+      ? { kind: 'mosaic', file: source.file, layout, options, skipBlank: config.skipBlank }
       : repeatLayout
         ? {
             kind: 'repeat',
-            file: image.file,
+            file: source.file,
             layout: repeatLayout,
+            pieces: mixed ? pieces.map((piece) => ({ file: piece.image.file, adjustment: piece.adjustment })) : undefined,
             options,
             cutGuides: repeat.cutGuides,
           }
@@ -240,7 +315,7 @@ export function App() {
     const controller = new AbortController();
     abort.current = controller;
     const filename = pdfFilename(
-      image.file.name,
+      mixed ? 'credenciales.png' : source.file.name,
       target.width,
       target.height,
       config.paperId,
@@ -331,6 +406,32 @@ export function App() {
                 <span class="step-number">1</span>
                 <h2 id="image-title">Agrega tu imagen</h2>
               </div>
+              {repeating && (
+                <fieldset class="repeat-image-mode" disabled={busy}>
+                  <legend>¿Cómo quieres distribuir las imágenes?</legend>
+                  <label>
+                    <input type="radio" name="repeat-image-mode" checked={repeat.imageMode === 'single'}
+                      onChange={() => changeRepeat({ imageMode: 'single' })} />
+                    Repetir una imagen
+                  </label>
+                  <label>
+                    <input type="radio" name="repeat-image-mode" checked={repeat.imageMode === 'multiple'}
+                      onChange={() => changeRepeat({ imageMode: 'multiple' })} />
+                    Imágenes diferentes por credencial
+                  </label>
+                </fieldset>
+              )}
+              {mixed ? (
+                <MultiImagePicker
+                  pieces={pieces}
+                  busy={busy}
+                  add={(files) => void selectPieceFiles(files)}
+                  replace={(index, file) => void selectPieceFiles([file], index)}
+                  remove={removePiece}
+                  reorder={reorderPiece}
+                  adjust={adjustPiece}
+                />
+              ) : (
               <div
                 class={`drop-zone ${dragging ? 'dragging' : ''} ${image ? 'has-image' : ''}`}
                 onDragOver={(e) => {
@@ -386,7 +487,8 @@ export function App() {
                   }}
                 />
               </div>
-              {loading && <p role="status">Abriendo tu imagen…</p>}
+              )}
+              {loading && <p role="status">Abriendo tus imágenes…</p>}
             </section>
             <section class="step" id="medidas" tabIndex={-1} aria-labelledby="size-title">
               <div class="section-heading">
@@ -511,7 +613,7 @@ export function App() {
                 omitted={omitted.length}
               />
             )}
-            {image && target && (
+            {!mixed && image && target && (
               <ImageAdjustment
                 value={config.imageAdjustment}
                 change={(value) => change('imageAdjustment', value)}
@@ -529,7 +631,8 @@ export function App() {
             )}
             {repeatLayout && (
               <RepeatPreview
-                image={image}
+                image={mixed ? null : image}
+                pieces={mixed ? pieces : undefined}
                 layout={repeatLayout}
                 adjustment={config.imageAdjustment}
                 cutGuides={repeat.cutGuides}
@@ -565,14 +668,14 @@ export function App() {
                 <>
                   <button
                     class="primary create"
-                    disabled={!image || !target || busy}
+                    disabled={!hasArtwork || !target || busy}
                     onClick={generate}
                   >
                     Crear PDF <span aria-hidden="true">↓</span>
                   </button>
                   <p class="action-note">
-                    {!image
-                      ? 'Agrega una imagen para crear tu PDF.'
+                    {!hasArtwork
+                      ? mixed ? 'Agrega las imágenes de las credenciales para crear tu PDF.' : 'Agrega una imagen para crear tu PDF.'
                       : target
                         ? repeating
                           ? 'Listo para imprimir y recortar.'
@@ -685,7 +788,7 @@ export function App() {
             width: String(p.widthMm / 10),
             height: String(p.heightMm / 10),
           }));
-          setStatus({ kind: image ? 'ready' : 'empty' });
+          setStatus({ kind: hasArtwork ? 'ready' : 'empty' });
         }}
       />
     </>
