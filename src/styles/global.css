@@ -1145,7 +1145,8 @@ dialog .button-row {
   margin-top: 20px;
   min-width: 0;
 }
-.sheet-settings label {
+.sheet-settings label,
+.sheet-field {
   display: grid;
   gap: 8px;
   min-width: 0;

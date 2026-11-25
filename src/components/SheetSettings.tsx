@@ -26,9 +26,10 @@ export function SheetSettings({
           onInput={(e) => change('sheets', e.currentTarget.value)}
         />
       </label>
-      <label>
-        Distribución del mosaico
+      <div class="sheet-field">
+        <label for="sheet-distribution">Distribución del mosaico</label>
         <select
+          id="sheet-distribution"
           value={config.sheetColumns}
           onChange={(e) => change('sheetColumns', e.currentTarget.value)}
         >
@@ -41,10 +42,11 @@ export function SheetSettings({
             </option>
           ))}
         </select>
-      </label>
-      <label>
-        Orientación de las hojas
+      </div>
+      <div class="sheet-field">
+        <label for="sheet-orientation">Orientación de las hojas</label>
         <select
+          id="sheet-orientation"
           value={config.orientation}
           onChange={(e) => change('orientation', e.currentTarget.value as Config['orientation'])}
         >
@@ -52,7 +54,7 @@ export function SheetSettings({
           <option value="portrait">Vertical</option>
           <option value="landscape">Horizontal</option>
         </select>
-      </label>
+      </div>
       <p class="section-note">
         La cantidad corresponde al mosaico completo. El tamaño final se calcula según tu papel,
         margen y solape. Se conservan todas las hojas, incluso si alguna queda en blanco. Puedes
