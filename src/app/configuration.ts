@@ -1,6 +1,9 @@
 import type { Orientation } from '../core/tiling';
 import { DEFAULT_IMAGE_ADJUSTMENT, type ImageAdjustment } from '../core/image-fit';
 export type Config = {
+  sizing: 'dimensions' | 'sheets';
+  sheets: string;
+  sheetColumns: string;
   width: string;
   height: string;
   paperId: string;
@@ -18,6 +21,9 @@ export type Config = {
   skipBlank: boolean;
 };
 export const initial: Config = {
+  sizing: 'dimensions',
+  sheets: '6',
+  sheetColumns: 'auto',
   width: '',
   height: '',
   paperId: 'letter',

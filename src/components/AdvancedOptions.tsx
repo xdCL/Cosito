@@ -25,17 +25,19 @@ export function AdvancedOptions({
       <fieldset disabled={busy}>
         <legend class="sr-only">Opciones de impresión</legend>
         <div class="advanced-grid">
-          <label>
-            Orientación
-            <select
-              value={config.orientation}
-              onChange={(e) => change('orientation', e.currentTarget.value as Orientation)}
-            >
-              <option value="auto">{repeating ? 'Quepan más piezas' : 'Usar menos hojas'}</option>
-              <option value="portrait">Vertical</option>
-              <option value="landscape">Horizontal</option>
-            </select>
-          </label>
+          {(repeating || config.sizing === 'dimensions') && (
+            <label>
+              Orientación
+              <select
+                value={config.orientation}
+                onChange={(e) => change('orientation', e.currentTarget.value as Orientation)}
+              >
+                <option value="auto">{repeating ? 'Quepan más piezas' : 'Usar menos hojas'}</option>
+                <option value="portrait">Vertical</option>
+                <option value="landscape">Horizontal</option>
+              </select>
+            </label>
+          )}
           <label>
             Margen seguro (mm)
             <input
@@ -112,7 +114,8 @@ export function AdvancedOptions({
               <label class="check-label" key={key}>
                 <input
                   type="checkbox"
-                  checked={config[key]}
+                  disabled={key === 'skipBlank' && config.sizing === 'sheets'}
+                  checked={key === 'skipBlank' && config.sizing === 'sheets' ? false : config[key]}
                   onChange={(e) => change(key, e.currentTarget.checked)}
                 />
                 {
@@ -127,6 +130,12 @@ export function AdvancedOptions({
               </label>
             ),
           )}
+        {!repeating && config.sizing === 'sheets' && (
+          <p class="section-note">
+            Se conserva la cantidad de hojas elegida. La guía de montaje y la calibración, si las
+            activas, agregan una página cada una al PDF.
+          </p>
+        )}
       </fieldset>
     </details>
   );

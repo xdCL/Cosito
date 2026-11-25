@@ -8,6 +8,8 @@ import { useRegisterSW } from 'virtual:pwa-register/preact';
 import { APP_CONFIG } from '../config/app';
 import { PAPERS } from '../config/papers';
 import { calculateLayout } from '../core/tiling';
+import { calculateSheetLayout, sheetDistributions } from '../core/sheet-layout';
+import { SheetSettings } from '../components/SheetSettings';
 import { calculateRepetition } from '../core/repetition';
 import { omitTiles, outsideArtwork } from '../core/mosaic-content';
 import { DEFAULT_IMAGE_ADJUSTMENT, orientedSize, placeImage } from '../core/image-fit';
@@ -147,21 +149,40 @@ export function App() {
     if (repeating) return { layout: null, error: '' };
     try {
       return {
-        layout: calculateLayout({
-          posterWidthMm: numeric(config.width) * 10,
-          posterHeightMm: numeric(config.height) * 10,
-          paperWidthMm: paper?.widthMm ?? numeric(config.customWidth) * 10,
-          paperHeightMm: paper?.heightMm ?? numeric(config.customHeight) * 10,
-          marginMm: numeric(config.margin),
-          overlapMm: numeric(config.overlap),
-          orientation: config.orientation,
-        }),
+        layout:
+          config.sizing === 'sheets'
+            ? calculateSheetLayout({
+                sheetCount: numeric(config.sheets),
+                columns: config.sheetColumns === 'auto' ? undefined : numeric(config.sheetColumns),
+                imageAspect: (() => {
+                  const size = orientedSize(
+                    image?.width ?? 1,
+                    image?.height ?? 1,
+                    config.imageAdjustment.rotation,
+                  );
+                  return size.width / size.height;
+                })(),
+                paperWidthMm: paper?.widthMm ?? numeric(config.customWidth) * 10,
+                paperHeightMm: paper?.heightMm ?? numeric(config.customHeight) * 10,
+                marginMm: numeric(config.margin),
+                overlapMm: numeric(config.overlap),
+                orientation: config.orientation,
+              })
+            : calculateLayout({
+                posterWidthMm: numeric(config.width) * 10,
+                posterHeightMm: numeric(config.height) * 10,
+                paperWidthMm: paper?.widthMm ?? numeric(config.customWidth) * 10,
+                paperHeightMm: paper?.heightMm ?? numeric(config.customHeight) * 10,
+                marginMm: numeric(config.margin),
+                overlapMm: numeric(config.overlap),
+                orientation: config.orientation,
+              }),
         error: '',
       };
     } catch (e) {
       return { layout: null, error: e instanceof Error ? e.message : 'Revisa las medidas.' };
     }
-  }, [config, paper, repeating]);
+  }, [config, paper, repeating, image]);
   const layout = calculation.layout;
   const repetition = useMemo(() => {
     if (!repeating) return { layout: null, error: '' };
@@ -197,14 +218,17 @@ export function App() {
     image &&
     target &&
     placeImage(image.width, image.height, target.width, target.height, config.imageAdjustment);
+  const skipBlank = config.sizing !== 'sheets' && config.skipBlank;
   const omitted =
     status.kind === 'completed'
       ? status.omitted
-      : layout && fitted && config.skipBlank
+      : layout && fitted && skipBlank
         ? outsideArtwork(layout, fitted)
         : [];
   const printedLayout = layout && omitTiles(layout, omitted);
-  const validateDimensions = showValidation && !!config.width.trim() && !!config.height.trim();
+  const validateDimensions =
+    showValidation &&
+    (config.sizing === 'sheets' || (!!config.width.trim() && !!config.height.trim()));
   useEffect(() => {
     let disposed = false;
     if ('serviceWorker' in navigator)
@@ -253,7 +277,16 @@ export function App() {
   function change<K extends keyof Config>(key: K, value: Config[K]) {
     if (busy) return;
     setShowValidation(false);
-    setConfig((c) => ({ ...c, [key]: value }));
+    setConfig((c) => ({
+      ...c,
+      [key]: value,
+      ...(key === 'sheets' &&
+      !sheetDistributions(numeric(String(value))).some(
+        (grid) => String(grid.columns) === c.sheetColumns,
+      )
+        ? { sheetColumns: 'auto' }
+        : {}),
+    }));
     setStatus({ kind: hasArtwork ? 'ready' : 'empty' });
   }
   function changeRepeat(patch: Partial<RepeatConfig>) {
@@ -368,7 +401,7 @@ export function App() {
     if (!source || !target || busy || abort.current) return;
     const options: PdfOptions = { ...config, filename: source.file.name, paperName };
     const request: PdfRequest | undefined = layout
-      ? { kind: 'mosaic', file: source.file, layout, options, skipBlank: config.skipBlank }
+      ? { kind: 'mosaic', file: source.file, layout, options, skipBlank }
       : repeatLayout
         ? {
             kind: 'repeat',
@@ -572,48 +605,79 @@ export function App() {
               <div class="section-heading">
                 <span class="step-number">2</span>
                 <h2 id="size-title">
-                  {repeating ? 'Tamaño y cantidad de piezas' : '¿Qué tamaño necesitas cubrir?'}
+                  {repeating
+                    ? 'Tamaño y cantidad de piezas'
+                    : config.sizing === 'sheets'
+                      ? 'Elige cuántas hojas usar'
+                      : '¿Qué tamaño necesitas cubrir?'}
                 </h2>
               </div>
               {repeating ? (
                 <RepeatSettings value={repeat} change={changeRepeat} busy={busy} />
               ) : (
                 <>
-                  <p class="section-note">Las medidas de tu imagen una vez montada.</p>
-                  <fieldset class="dimension-row" disabled={busy}>
-                    <legend class="sr-only">Tamaño terminado en centímetros</legend>
-                    {(['width', 'height'] as const).map((key, i) => (
-                      <label for={key} key={key}>
-                        {i ? 'Alto' : 'Ancho'}
-                        <span class="unit-input">
-                          <input
-                            id={key}
-                            aria-label={i ? 'Alto' : 'Ancho'}
-                            type="text"
-                            inputMode="decimal"
-                            value={config[key]}
-                            onInput={(e) => change(key, e.currentTarget.value)}
-                            aria-invalid={!layout && validateDimensions}
-                            aria-describedby={!layout ? 'config-error' : undefined}
-                          />
-                          <span>cm</span>
-                        </span>
-                      </label>
-                    ))}
-                    <span class="times" aria-hidden="true">
-                      ×
-                    </span>
+                  <fieldset class="repeat-image-mode" disabled={busy}>
+                    <legend>¿Cómo quieres definir el mosaico?</legend>
+                    <label>
+                      <input
+                        type="radio"
+                        name="mosaic-sizing"
+                        checked={config.sizing === 'dimensions'}
+                        onChange={() => change('sizing', 'dimensions')}
+                      />
+                      Por tamaño en centímetros
+                    </label>
+                    <label>
+                      <input
+                        type="radio"
+                        name="mosaic-sizing"
+                        checked={config.sizing === 'sheets'}
+                        onChange={() => change('sizing', 'sheets')}
+                      />
+                      Por cantidad de hojas
+                    </label>
                   </fieldset>
-                  <button
-                    class="text-button"
-                    disabled={busy}
-                    onClick={(event) => {
-                      event.currentTarget.focus();
-                      setPresetsOpen(true);
-                    }}
-                  >
-                    Usar un tamaño frecuente <span aria-hidden="true">↗</span>
-                  </button>
+                  {config.sizing === 'sheets' ? (
+                    <SheetSettings config={config} change={change} busy={busy} />
+                  ) : (
+                    <>
+                      <p class="section-note">Las medidas de tu imagen una vez montada.</p>
+                      <fieldset class="dimension-row" disabled={busy}>
+                        <legend class="sr-only">Tamaño terminado en centímetros</legend>
+                        {(['width', 'height'] as const).map((key, i) => (
+                          <label for={key} key={key}>
+                            {i ? 'Alto' : 'Ancho'}
+                            <span class="unit-input">
+                              <input
+                                id={key}
+                                aria-label={i ? 'Alto' : 'Ancho'}
+                                type="text"
+                                inputMode="decimal"
+                                value={config[key]}
+                                onInput={(e) => change(key, e.currentTarget.value)}
+                                aria-invalid={!layout && validateDimensions}
+                                aria-describedby={!layout ? 'config-error' : undefined}
+                              />
+                              <span>cm</span>
+                            </span>
+                          </label>
+                        ))}
+                        <span class="times" aria-hidden="true">
+                          ×
+                        </span>
+                      </fieldset>
+                      <button
+                        class="text-button"
+                        disabled={busy}
+                        onClick={(event) => {
+                          event.currentTarget.focus();
+                          setPresetsOpen(true);
+                        }}
+                      >
+                        Usar un tamaño frecuente <span aria-hidden="true">↗</span>
+                      </button>
+                    </>
+                  )}
                 </>
               )}
             </section>
@@ -674,7 +738,9 @@ export function App() {
                 )}
                 {repeating
                   ? 'Puedes usar A4 adhesivo del mismo tamaño que el A4 normal.'
-                  : 'Elegimos la orientación que necesita menos hojas.'}
+                  : config.sizing === 'sheets'
+                    ? 'El tamaño terminado se actualiza al cambiar el papel.'
+                    : 'Elegimos la orientación que necesita menos hojas.'}
               </p>
             </section>
           </div>
@@ -782,7 +848,9 @@ export function App() {
                           : 'Listo para imprimir, recortar y unir.'
                         : repeating
                           ? 'Revisa las medidas y la cantidad de piezas.'
-                          : 'Indica el ancho y el alto finales para crear tu PDF.'}
+                          : config.sizing === 'sheets'
+                            ? 'Revisa la cantidad de hojas y las opciones de impresión.'
+                            : 'Indica el ancho y el alto finales para crear tu PDF.'}
                   </p>
                 </>
               )}

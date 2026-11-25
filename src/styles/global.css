@@ -1139,6 +1139,23 @@ dialog .button-row {
     padding: 22px 14px;
   }
 }
+.sheet-settings {
+  display: grid;
+  gap: 16px;
+  margin-top: 20px;
+  min-width: 0;
+}
+.sheet-settings label,
+.sheet-field {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+.sheet-settings select,
+.sheet-settings input {
+  width: 100%;
+  min-width: 0;
+}
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
