@@ -1,5 +1,12 @@
 # Changelog
 
+## Actualización — 2026-11-25
+
+- Mosaico por cantidad exacta de hojas (1 a 100), además del tamaño en centímetros.
+- Distribuciones por columnas y filas: 6 hojas pueden formar 2 × 3, 3 × 2, 1 × 6 o 6 × 1.
+- Recomendación automática según la proporción y giro de la imagen, con orientación del papel editable.
+- Tamaño final calculado con el papel, margen y solape. Todas las hojas se conservan en este modo; guía y calibración siguen siendo páginas adicionales opcionales.
+
 ## Actualización — 2026-11-10
 
 - Mosaicos que omiten por defecto hojas sin imagen, blancas o transparentes, conservando coordenadas de montaje.

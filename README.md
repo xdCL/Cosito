@@ -16,13 +16,21 @@ Desarrollado por **xdCL**. Versión **0.1.0**, licencia MIT.
 ## Uso
 
 1. Selecciona o arrastra un JPG, PNG o WEBP.
-2. Indica el ancho y el alto finales en centímetros, o elige un tamaño frecuente.
+2. Elige **Por tamaño en centímetros** para indicar ancho y alto (o usar un tamaño frecuente), o **Por cantidad de hojas** para repartir tu imagen en una cantidad exacta de hojas.
 3. Elige Carta / Letter, A4, Oficio (21,6 × 33 cm), Legal o papel personalizado.
 4. En **Ajustar imagen**, puedes girarla 90° a izquierda o derecha, centrarla o elegir su posición. Revisa el mosaico y pulsa **Crear PDF**, luego **Descargar PDF**.
 5. Cuando el PDF esté listo, puedes pulsar **Crear otro mosaico con otra foto** para elegir otra imagen sin reiniciar el proyecto. Se conservan las medidas y el papel; descarga antes el PDF anterior, porque será sustituido al cargar la nueva foto. Si cancelas el selector, el PDF actual sigue disponible.\n6. Imprime usando **Tamaño real / 100 %**. Desactiva **Ajustar a página**.
 6. Recorta los márgenes. En hojas con vecinos **impresos** a la izquierda o arriba, recorta también la banda repetida izquierda o superior. Conserva esas bandas en los bordes externos. Junta los bordes recortados y pega por detrás siguiendo A1, A2…; B1, B2…
 
 Predeterminado: margen seguro 5 mm, solape 5 mm, imagen completa y orientación automática. El solape repite contenido; **no aumenta el tamaño final**. Puedes cubrir todo recortando bordes o ajustar exacto deformando la imagen. Opciones avanzadas incluyen calidad, orientación, marcas y páginas opcionales de guía y calibración; no se añaden hojas extra por defecto.
+
+### Mosaico por cantidad de hojas
+
+En el paso 2 selecciona **Por cantidad de hojas**, escribe un número entre **1 y 100** y elige la **Distribución del mosaico**. Para 6 hojas puedes elegir **2 columnas × 3 filas**, **3 columnas × 2 filas**, **1 columna × 6 filas** o **6 columnas × 1 fila**. La opción recomendada compara las distribuciones y orientaciones del papel para conservar mejor la proporción de la imagen, incluido su giro.
+
+La **Orientación de las hojas** define si el papel se imprime vertical u horizontal, independientemente de las columnas y filas. El tamaño terminado se calcula como `columnas × ancho imprimible − (columnas − 1) × solape`, y lo mismo para el alto con las filas. Cambiar el papel, margen o solape actualiza ese tamaño sin cambiar la cantidad elegida.
+
+Se conservan **todas las hojas del mosaico**, incluidas las vacías: pedir 6 genera 6 páginas de mosaico. El ajuste **Imagen completa** mantiene la proporción y puede dejar espacios blancos; **Cubrir todo** llena el mosaico recortando bordes. La guía y la calibración agregan una página cada una sólo si las activas. Puedes volver al tamaño en centímetros sin perder las medidas anteriores.
 
 Los ajustes de la imagen se aplican al póster completo, con las mismas medidas y hojas. **Centrar imagen** alinea ambos ejes sin quitar el giro; con **Cubrir todo**, la posición elige qué parte queda dentro del recorte.
 
